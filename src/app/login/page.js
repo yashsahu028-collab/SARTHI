@@ -35,6 +35,21 @@ export default function LoginPage() {
       return;
     }
 
+    // Instant Demo Trainer (Teacher / Faculty) Login
+    if (
+      (email.trim().toLowerCase() === "trainer.demo@imd.gov.in" ||
+        email.trim().toLowerCase() === "trainer@sarthi.gov.in" ||
+        email.trim().toLowerCase() === "faculty.demo@imd.gov.in" ||
+        email.trim().toLowerCase() === "rk.sharma@imd.gov.in") &&
+      (password === "TrainerDemo@123" || password === "trainer123" || password === "Trainer@123" || password === "Faculty@123")
+    ) {
+      setSuccessMsg("Welcome back, Dr. R. K. Sharma! Redirecting to Faculty Command Center...");
+      setTimeout(() => {
+        router.push("/trainer");
+      }, 700);
+      return;
+    }
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -137,13 +152,57 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          <div style={{ marginBottom: "24px" }}>
+          <div style={{ marginBottom: "20px" }}>
             <h2 style={{ fontSize: "28px", fontWeight: "700", color: "#0c211d", margin: "0 0 6px 0" }}>
               Log in to your account
             </h2>
-            <p style={{ fontSize: "14px", color: "#556763", margin: 0 }}>
-              Welcome back! Please enter your details.
+            <p style={{ fontSize: "14px", color: "#556763", margin: "0 0 14px 0" }}>
+              Welcome back! Please enter your details or select a demo role.
             </p>
+
+            {/* Instant Demo Role Fill Buttons */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "10px" }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail("student.demo@imd.gov.in");
+                  setPassword("StudentDemo@123");
+                }}
+                style={{
+                  padding: "8px 10px",
+                  borderRadius: "8px",
+                  background: "#f0fdf4",
+                  border: "1px solid #86efac",
+                  color: "#15803d",
+                  fontSize: "12px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  textAlign: "center",
+                }}
+              >
+                👨‍🎓 Demo Trainee
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail("trainer.demo@imd.gov.in");
+                  setPassword("TrainerDemo@123");
+                }}
+                style={{
+                  padding: "8px 10px",
+                  borderRadius: "8px",
+                  background: "#ecfdf5",
+                  border: "1px solid #6ee7b7",
+                  color: "#047857",
+                  fontSize: "12px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  textAlign: "center",
+                }}
+              >
+                👨‍🏫 Demo Trainer
+              </button>
+            </div>
           </div>
 
 
