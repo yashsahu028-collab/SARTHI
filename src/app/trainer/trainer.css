@@ -323,9 +323,10 @@
 .trainer-quick-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  height: 40px;
-  padding: 0 16px;
+  min-height: 38px;
+  padding: 8px 18px;
   border-radius: var(--tr-radius-md);
   font-size: 13.5px;
   font-weight: 700;
@@ -333,12 +334,16 @@
   transition: all 0.2s ease;
   border: none;
   text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  letter-spacing: 0.2px;
 }
 
 .trainer-btn-green {
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  color: #ffffff;
-  box-shadow: 0 4px 10px rgba(5, 150, 105, 0.25);
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
 }
 
 .trainer-btn-green:hover {
@@ -762,6 +767,11 @@
   border-bottom: 1px solid var(--tr-border-subtle);
   color: var(--tr-text-body);
   vertical-align: middle;
+}
+
+.trainer-table td:last-child {
+  white-space: nowrap;
+  min-width: 150px;
 }
 
 .trainer-table tr:last-child td {

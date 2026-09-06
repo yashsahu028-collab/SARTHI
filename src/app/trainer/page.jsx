@@ -204,7 +204,7 @@ export default function TrainerDashboardPage() {
                           <button
                             type="button"
                             className="trainer-quick-btn trainer-btn-green"
-                            style={{ height: "32px", padding: "0 12px", fontSize: "12px" }}
+                            style={{ minHeight: "36px", padding: "8px 18px", fontSize: "12.5px", whiteSpace: "nowrap" }}
                             onClick={() => setActiveModal({ type: "grading", data: sub })}
                           >
                             Evaluate & Grade
