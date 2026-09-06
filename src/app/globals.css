@@ -201,6 +201,25 @@ body {
   }
 }
 
+/* Hero Floating Stat Cards Positioning & Layering */
+.home-header-image-whole-wrap,
+.home-header-image-wrap {
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+.home-item-card.first-card {
+  z-index: 2 !important;
+}
+
+.home-item-card.second-card {
+  z-index: 10 !important;
+}
+
+.home-item-card.third-card {
+  z-index: 10 !important;
+}
+
 /* Interactive Suggestion Chips */
 .suggestion-chip {
   font-size: 12px;

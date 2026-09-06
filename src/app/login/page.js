@@ -14,11 +14,26 @@ export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg("");
     setSuccessMsg("");
+
+    // Instant Demo Student Login
+    if (
+      (email.trim().toLowerCase() === "student.demo@imd.gov.in" ||
+        email.trim().toLowerCase() === "student@sarthi.gov.in" ||
+        email.trim().toLowerCase() === "mohit.raj@imd.gov.in") &&
+      (password === "StudentDemo@123" || password === "student123" || password === "Student@123")
+    ) {
+      setSuccessMsg("Welcome back, Mohit Raj! Redirecting to Student Dashboard...");
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 700);
+      return;
+    }
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -31,7 +46,7 @@ export default function LoginPage() {
       } else {
         setSuccessMsg(`Welcome back! Logged in as ${data.user.email}`);
         setTimeout(() => {
-          router.push("/");
+          router.push("/dashboard");
           router.refresh();
         }, 1000);
       }
@@ -130,6 +145,7 @@ export default function LoginPage() {
               Welcome back! Please enter your details.
             </p>
           </div>
+
 
           {errorMsg && (
             <div style={{ marginBottom: "14px", padding: "10px 14px", borderRadius: "8px", background: "#fef2f2", border: "1px solid #fecaca", color: "#b91c1c", fontSize: "13px" }}>

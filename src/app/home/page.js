@@ -175,9 +175,9 @@ export default function Page() {
 
           <div className="home-header-bg-area">
             <div className="home-header-image-area">
-              <FloatMotion duration={5}>
-                <div className="home-header-image-whole-wrap">
-                  <div className="home-header-image-wrap">
+              <FloatMotion duration={5} style={{ position: "relative", zIndex: 5 }}>
+                <div className="home-header-image-whole-wrap" style={{ position: "relative", zIndex: 5 }}>
+                  <div className="home-header-image-wrap" style={{ position: "relative", zIndex: 5 }}>
                     <img
                       src="/images/home-header-robo-imge.png"
                       loading="eager"
@@ -193,6 +193,59 @@ export default function Page() {
                   </div>
                 </div>
               </FloatMotion>
+
+              <div className="home-item-card-wrap">
+                <div className="home-item-card first-card" style={{ zIndex: 2 }}>
+                  <div className="home-item-icon-area">
+                    <div className="home-item-icon-wrap">
+                      <img
+                        src="/images/home-header-star-icon.svg"
+                        loading="eager"
+                        alt="Start symbol"
+                        className="home-item-icon"
+                      />
+                    </div>
+                  </div>
+                  <div className="home-item-title-wrap">
+                    <h3 className="home-item-title">98%</h3>
+                    <p className="home-item-text">Assessment Completion</p>
+                  </div>
+                </div>
+
+                <div className="home-item-card second-card">
+                  <div className="home-item-icon-area">
+                    <div className="home-item-icon-wrap">
+                      <img
+                        src="/images/home-header-user-icon.svg"
+                        loading="eager"
+                        alt="Users symbol"
+                        className="home-item-icon"
+                      />
+                    </div>
+                  </div>
+                  <div className="home-item-title-wrap">
+                    <h4 className="home-item-title">100+</h4>
+                    <p className="home-item-text">IMD Divisions</p>
+                  </div>
+                </div>
+
+                <div className="home-item-card third-card">
+                  <div className="home-item-icon-area">
+                    <div className="home-item-icon-wrap">
+                      <img
+                        src="/images/0b41bec3a5d6b6bb2fb0cf1cdc629970_home-header-report-icon.svg"
+                        loading="eager"
+                        alt="Certificate symbol"
+                        className="home-item-icon"
+                      />
+                    </div>
+                  </div>
+                  <div className="home-item-title-wrap">
+                    <h4 className="home-item-title">20+</h4>
+                    <p className="home-item-text">Active Courses</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
