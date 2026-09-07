@@ -1,0 +1,1154 @@
+/* ==========================================================================
+   SARTHI TRAINER MISSION CONTROL DASHBOARD - DESIGN SYSTEM & CSS
+   National Meteorological Capacity Building Platform (IMD / MoES)
+   ========================================================================== */
+
+/* Inherit Root Variables & Extend for Faculty Command Center */
+:root {
+  --tr-primary: #024a3a;
+  --tr-primary-hover: #03362a;
+  --tr-primary-light: #e6f4f1;
+  --tr-accent-emerald: #10b981;
+  --tr-accent-teal: #0d9488;
+  --tr-accent-cyan: #06b6d4;
+  --tr-accent-amber: #f59e0b;
+  --tr-accent-rose: #f43f5e;
+  --tr-accent-indigo: #6366f1;
+  --tr-bg: #f8faf9;
+  --tr-surface: #ffffff;
+  --tr-surface-alt: #f1f5f3;
+  --tr-border: #e2e8f0;
+  --tr-border-subtle: #edf2f0;
+  --tr-text-heading: #0a2920;
+  --tr-text-body: #334155;
+  --tr-text-muted: #64748b;
+  --tr-text-light: #94a3b8;
+  --tr-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --tr-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --tr-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --tr-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  --tr-radius-sm: 8px;
+  --tr-radius-md: 12px;
+  --tr-radius-lg: 18px;
+  --tr-radius-xl: 24px;
+}
+
+/* ==========================================================================
+   APP SHELL LAYOUT
+   ========================================================================== */
+.trainer-app-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--tr-bg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--tr-text-body);
+}
+
+/* SIDEBAR */
+.trainer-sidebar {
+  width: 280px;
+  background: #02231c;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px 18px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 40;
+  flex-shrink: 0;
+}
+
+.trainer-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.trainer-brand-logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+.trainer-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.trainer-brand-title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+}
+
+.trainer-brand-subtitle {
+  font-size: 10.5px;
+  color: #a7f3d0;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.trainer-nav-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.trainer-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--tr-radius-md);
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.trainer-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  transform: translateX(3px);
+}
+
+.trainer-nav-btn.active {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35);
+}
+
+.trainer-nav-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.trainer-nav-badge {
+  background: #f59e0b;
+  color: #0c211d;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-left: auto;
+}
+
+.trainer-sidebar-bottom {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.trainer-role-switch-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--tr-radius-md);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.trainer-switch-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 700;
+  color: #a7f3d0;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  transition: all 0.2s ease;
+  width: 100%;
+  justify-content: center;
+}
+
+.trainer-switch-btn:hover {
+  background: rgba(16, 185, 129, 0.3);
+  color: #ffffff;
+}
+
+.trainer-user-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 8px 12px;
+  border-radius: var(--tr-radius-md);
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s ease;
+}
+
+.trainer-user-pill:hover {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.trainer-user-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid #10b981;
+  object-fit: cover;
+}
+
+.trainer-user-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.trainer-user-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.trainer-user-title {
+  font-size: 11px;
+  color: #94a3b8;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+/* MAIN CONTENT */
+.trainer-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--tr-bg);
+}
+
+/* TOPBAR */
+.trainer-topbar {
+  height: 70px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--tr-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.trainer-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 1;
+  max-width: 540px;
+}
+
+.trainer-search-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.trainer-search-input {
+  width: 100%;
+  height: 42px;
+  background: var(--tr-surface-alt);
+  border: 1px solid var(--tr-border);
+  border-radius: 999px;
+  padding: 0 18px 0 42px;
+  font-size: 13.5px;
+  color: var(--tr-text-heading);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.trainer-search-input:focus {
+  background: #ffffff;
+  border-color: var(--tr-accent-teal);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+.trainer-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 17px;
+  height: 17px;
+  color: var(--tr-text-muted);
+}
+
+.trainer-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.trainer-role-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #065f46;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid #a7f3d0;
+}
+
+.trainer-quick-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 18px;
+  border-radius: var(--tr-radius-md);
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  letter-spacing: 0.2px;
+}
+
+.trainer-btn-green {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+.trainer-btn-green:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(5, 150, 105, 0.35);
+}
+
+.trainer-btn-outline {
+  background: #ffffff;
+  color: var(--tr-primary);
+  border: 1px solid var(--tr-border);
+}
+
+.trainer-btn-outline:hover {
+  background: var(--tr-surface-alt);
+  border-color: var(--tr-primary);
+}
+
+.trainer-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--tr-surface-alt);
+  border: 1px solid var(--tr-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--tr-text-body);
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.trainer-icon-btn:hover {
+  background: #ffffff;
+  border-color: var(--tr-accent-teal);
+  color: var(--tr-accent-teal);
+}
+
+.trainer-notif-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+}
+
+/* PAGE CONTAINER */
+.trainer-content-body {
+  padding: 28px 32px 60px;
+  flex: 1;
+}
+
+/* ==========================================================================
+   DASHBOARD 2-COLUMN GRID
+   ========================================================================== */
+.trainer-grid-layout {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 28px;
+}
+
+.trainer-center-column {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-width: 0;
+}
+
+.trainer-side-column {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* ==========================================================================
+   FACULTY WELCOME HERO
+   ========================================================================== */
+.trainer-hero-card {
+  background: linear-gradient(135deg, #02362b 0%, #01221b 100%);
+  border-radius: var(--tr-radius-xl);
+  padding: 30px 36px;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 12px 30px rgba(2, 54, 43, 0.25);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.trainer-hero-glow {
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.trainer-hero-left {
+  position: relative;
+  z-index: 2;
+  max-width: 580px;
+}
+
+.trainer-hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #a7f3d0;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.trainer-hero-name {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin: 0 0 8px 0;
+  color: #ffffff;
+}
+
+.trainer-hero-desc {
+  font-size: 14px;
+  color: #cbd5e1;
+  line-height: 1.5;
+  margin: 0 0 20px 0;
+}
+
+.trainer-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   KPI STATS GRID
+   ========================================================================== */
+.trainer-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.trainer-stat-card {
+  background: #ffffff;
+  border-radius: var(--tr-radius-lg);
+  padding: 20px;
+  border: 1px solid var(--tr-border);
+  box-shadow: var(--tr-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.trainer-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--tr-shadow-md);
+  border-color: var(--tr-accent-teal);
+}
+
+.trainer-stat-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.trainer-stat-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--tr-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.trainer-stat-icon-emerald { background: #ecfdf5; color: #059669; }
+.trainer-stat-icon-teal { background: #f0fdfa; color: #0d9488; }
+.trainer-stat-icon-amber { background: #fffbeb; color: #d97706; }
+.trainer-stat-icon-indigo { background: #eef2ff; color: #4f46e5; }
+
+.trainer-stat-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.trainer-stat-badge-green { background: #dcfce7; color: #166534; }
+.trainer-stat-badge-amber { background: #fef3c7; color: #92400e; }
+
+.trainer-stat-val {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--tr-text-heading);
+  letter-spacing: -0.5px;
+  margin: 0 0 4px 0;
+}
+
+.trainer-stat-lbl {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tr-text-muted);
+  margin: 0;
+}
+
+/* ==========================================================================
+   PANEL CARDS & SECTION HEADERS
+   ========================================================================== */
+.trainer-section-card {
+  background: #ffffff;
+  border-radius: var(--tr-radius-lg);
+  border: 1px solid var(--tr-border);
+  box-shadow: var(--tr-shadow-sm);
+  padding: 24px;
+  position: relative;
+}
+
+.trainer-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.trainer-section-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--tr-text-heading);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.trainer-section-subtitle {
+  font-size: 12.5px;
+  color: var(--tr-text-muted);
+  margin-top: 2px;
+}
+
+.trainer-view-all-link {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tr-accent-teal);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.trainer-view-all-link:hover {
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   COURSES GRID & CARDS
+   ========================================================================== */
+.trainer-courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.trainer-course-card {
+  background: #ffffff;
+  border: 1px solid var(--tr-border);
+  border-radius: var(--tr-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--tr-shadow-sm);
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.trainer-course-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--tr-shadow-md);
+  border-color: var(--tr-accent-teal);
+}
+
+.trainer-course-thumb-wrap {
+  position: relative;
+  height: 140px;
+  width: 100%;
+  overflow: hidden;
+  background: #02231c;
+}
+
+.trainer-course-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.trainer-course-card:hover .trainer-course-thumb {
+  transform: scale(1.05);
+}
+
+.trainer-course-status-pill {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pill-active { background: #10b981; color: #ffffff; }
+.pill-draft { background: #64748b; color: #ffffff; }
+
+.trainer-course-body {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.trainer-course-cat {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--tr-accent-teal);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.trainer-course-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--tr-text-heading);
+  margin: 0 0 10px 0;
+  line-height: 1.35;
+}
+
+.trainer-course-stats-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: var(--tr-text-muted);
+  margin: 12px 0 14px 0;
+  padding: 8px 12px;
+  background: var(--tr-surface-alt);
+  border-radius: var(--tr-radius-sm);
+}
+
+.trainer-progress-bar-wrap {
+  width: 100%;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.trainer-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #0d9488);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.trainer-course-footer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ==========================================================================
+   DATA TABLES (GRADING DESK / TRAINEE ROSTER)
+   ========================================================================== */
+.trainer-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--tr-radius-md);
+  border: 1px solid var(--tr-border);
+}
+
+.trainer-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13.5px;
+}
+
+.trainer-table th {
+  background: var(--tr-surface-alt);
+  color: var(--tr-text-heading);
+  font-weight: 700;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--tr-border);
+  white-space: nowrap;
+}
+
+.trainer-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--tr-border-subtle);
+  color: var(--tr-text-body);
+  vertical-align: middle;
+}
+
+.trainer-table td:last-child {
+  white-space: nowrap;
+  min-width: 150px;
+}
+
+.trainer-table tr:last-child td {
+  border-bottom: none;
+}
+
+.trainer-table tr:hover td {
+  background: #f8faf9;
+}
+
+.trainer-status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.tag-pending { background: #fef3c7; color: #92400e; }
+.tag-graded { background: #dcfce7; color: #166534; }
+.tag-revision { background: #fee2e2; color: #991b1b; }
+.tag-approved { background: #d1fae5; color: #065f46; }
+
+/* ==========================================================================
+   LIVE STUDIO CONSOLE
+   ========================================================================== */
+.trainer-studio-container {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+}
+
+.trainer-stage-screen {
+  background: #021a15;
+  border-radius: var(--tr-radius-lg);
+  overflow: hidden;
+  border: 1px solid #064e3b;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.trainer-stage-header {
+  padding: 14px 20px;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.trainer-live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.trainer-live-dot-pulse {
+  width: 7px;
+  height: 7px;
+  background: #ffffff;
+  border-radius: 50%;
+  animation: pulse-red 1.2s infinite ease-in-out;
+}
+
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(1.3); }
+}
+
+.trainer-stage-canvas {
+  height: 380px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle, #063e32 0%, #011410 100%);
+}
+
+.trainer-radar-mock {
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  border: 2px solid rgba(16, 185, 129, 0.4);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 40px rgba(16, 185, 129, 0.15);
+}
+
+.trainer-radar-sweep {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  top: 0;
+  right: 0;
+  background: linear-gradient(45deg, rgba(16, 185, 129, 0.5) 0%, transparent 80%);
+  border-top-right-radius: 100%;
+  transform-origin: bottom left;
+  animation: radar-rotate 4s infinite linear;
+}
+
+@keyframes radar-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.trainer-stage-controls {
+  padding: 16px 20px;
+  background: #011410;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.trainer-ctrl-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.trainer-ctrl-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.06);
+}
+
+.trainer-ctrl-btn.active {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.trainer-ctrl-btn.danger {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   MODALS & OVERLAYS
+   ========================================================================== */
+.trainer-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 35, 28, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.trainer-modal-card {
+  background: #ffffff;
+  border-radius: var(--tr-radius-xl);
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--tr-shadow-xl);
+  border: 1px solid var(--tr-border);
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.trainer-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--tr-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.trainer-modal-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--tr-text-heading);
+  margin: 0;
+}
+
+.trainer-modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--tr-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  line-height: 1;
+}
+
+.trainer-modal-close:hover {
+  color: var(--tr-text-heading);
+  background: var(--tr-surface-alt);
+}
+
+.trainer-modal-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.trainer-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--tr-border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  background: var(--tr-surface-alt);
+}
+
+.trainer-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.trainer-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tr-text-heading);
+}
+
+.trainer-input,
+.trainer-textarea,
+.trainer-select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--tr-border);
+  border-radius: var(--tr-radius-md);
+  font-size: 14px;
+  color: var(--tr-text-heading);
+  background: #ffffff;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.trainer-input:focus,
+.trainer-textarea:focus,
+.trainer-select:focus {
+  border-color: var(--tr-accent-teal);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+/* ==========================================================================
+   OFFICIAL IMD CERTIFICATE PREVIEW
+   ========================================================================== */
+.trainer-cert-paper {
+  background: #fffdfa;
+  border: 10px double #024a3a;
+  border-radius: 12px;
+  padding: 36px 40px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.trainer-cert-emblem {
+  height: 60px;
+  width: auto;
+  margin: 0 auto 12px auto;
+  display: block;
+}
+
+.trainer-cert-title {
+  font-family: Georgia, serif;
+  font-size: 24px;
+  font-weight: 800;
+  color: #02362b;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin: 0 0 6px 0;
+}
+
+.trainer-cert-sub {
+  font-size: 12.5px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 24px;
+}
+
+.trainer-cert-name {
+  font-family: Georgia, serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: #0c211d;
+  border-bottom: 2px solid #cbd5e1;
+  display: inline-block;
+  padding: 0 30px 6px 30px;
+  margin: 10px 0 16px 0;
+}
+
+.trainer-cert-signatures {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 36px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* ==========================================================================
+   RESPONSIVENESS
+   ========================================================================== */
+@media (max-width: 1200px) {
+  .trainer-grid-layout {
+    grid-template-columns: 1fr;
+  }
+  .trainer-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .trainer-studio-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .trainer-sidebar {
+    position: fixed;
+    left: -280px;
+    transition: left 0.3s ease;
+  }
+  .trainer-sidebar.open {
+    left: 0;
+  }
+  .trainer-content-body {
+    padding: 20px 16px 40px;
+  }
+  .trainer-topbar {
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 600px) {
+  .trainer-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .trainer-hero-card {
+    padding: 20px;
+  }
+  .trainer-hero-name {
+    font-size: 20px;
+  }
+}

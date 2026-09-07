@@ -181,6 +181,30 @@ export default function StudentSidebar() {
           </Link>
         </div>
 
+        {/* Faculty Portal Switcher */}
+        <div style={{ padding: "0 2px" }}>
+          <Link
+            href="/trainer"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              background: "#ecfdf5",
+              color: "#065f46",
+              border: "1px solid #a7f3d0",
+              padding: "8px 12px",
+              borderRadius: "10px",
+              fontSize: "12px",
+              fontWeight: "700",
+              textDecoration: "none",
+              transition: "all 0.2s ease",
+            }}
+          >
+            <span>👨‍🏫 Switch to Faculty Portal &rarr;</span>
+          </Link>
+        </div>
+
         {/* User Profile Chip */}
         <Link href="/dashboard/settings" className="db-sidebar-user-pill" style={{ textDecoration: "none" }}>
           <div className="db-user-avatar-wrap">

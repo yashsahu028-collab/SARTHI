@@ -325,6 +325,29 @@ export default function StudentHeader({
           )}
         </div>
 
+        {/* Switch to Trainer View Button */}
+        <Link
+          href="/trainer"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "6px 12px",
+            borderRadius: "999px",
+            background: "#ecfdf5",
+            color: "#065f46",
+            fontSize: "12px",
+            fontWeight: "700",
+            border: "1px solid #a7f3d0",
+            textDecoration: "none",
+            transition: "all 0.2s ease",
+          }}
+          title="Switch to Trainer (Faculty) Mission Control"
+        >
+          <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#059669" }}></span>
+          <span>Trainer View &rarr;</span>
+        </Link>
+
         {/* User Profile Chip */}
         <div style={{ position: "relative" }}>
           <div
@@ -366,6 +389,11 @@ export default function StudentHeader({
               <div className="db-notification-item">
                 <Link href="/dashboard/certificates" onClick={() => setShowUserMenu(false)} style={{ textDecoration: "none", color: "inherit" }}>
                   My Certificates
+                </Link>
+              </div>
+              <div className="db-notification-item">
+                <Link href="/trainer" onClick={() => setShowUserMenu(false)} style={{ textDecoration: "none", color: "#059669", fontWeight: "700" }}>
+                  Switch to Trainer View &rarr;
                 </Link>
               </div>
               <div className="db-notification-item" style={{ color: "#dc2626" }}>
