@@ -27,198 +27,256 @@ export default function TrainerAssignmentsPage() {
 
   return (
     <TrainerShell searchQuery={searchQuery} setSearchQuery={setSearchQuery} placeholder="Search trainee submissions or assignments...">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "16px" }}>
-        <div>
-          <h1 style={{ fontSize: "24px", fontWeight: "800", color: "var(--tr-text-heading)", margin: "0 0 4px 0" }}>
-            Grading Desk & Assessment Console
-          </h1>
-          <p style={{ fontSize: "14px", color: "var(--tr-text-muted)", margin: 0 }}>
-            Review trainee laboratory reports, NetCDF datasets, score rubrics, and publish constructive feedback.
-          </p>
+      <div style={{ padding: "28px 36px 64px 36px", maxWidth: "1360px", margin: "0 auto", width: "100%" }}>
+        {/* Page Header (Apple Design Hierarchy) */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "28px", flexWrap: "wrap", gap: "16px" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+              <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "var(--sarthi-emerald, #059669)" }} />
+              <span style={{ fontSize: "11px", fontWeight: "800", color: "#065f46", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                ACADEMIC EVALUATION DESK
+              </span>
+            </div>
+            <h1 style={{ fontSize: "30px", fontWeight: "800", color: "var(--sarthi-text-heading, #0a2920)", margin: "0 0 6px 0", letterSpacing: "-0.5px" }}>
+              Grading Desk & Submissions
+            </h1>
+            <p style={{ fontSize: "14px", color: "var(--sarthi-text-muted, #64748b)", margin: 0, maxWidth: "680px" }}>
+              Review trainee laboratory practicals, NetCDF data analysis reports, evaluate rubrics, and publish feedback.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="db-btn-primary"
+            onClick={() => setActiveModal({ type: "new_assignment", data: null })}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "10px 20px",
+              borderRadius: "12px",
+              fontSize: "13.5px",
+              fontWeight: "700",
+              cursor: "pointer",
+            }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Create Assignment</span>
+          </button>
         </div>
 
-        <button
-          type="button"
-          className="trainer-quick-btn trainer-btn-green"
-          onClick={() => setActiveModal({ type: "new_assignment", data: null })}
+        {/* 4 KPI Stat Cards */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+            gap: "14px",
+            marginBottom: "28px",
+          }}
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          <span>Create New Assignment</span>
-        </button>
-      </div>
+          <div className="db-stat-card">
+            <div className="db-stat-left">
+              <div className="db-stat-icon-box green">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                </svg>
+              </div>
+              <div className="db-stat-data">
+                <span className="db-stat-value">{assignments.length}</span>
+                <span className="db-stat-label">Active Practicals</span>
+              </div>
+            </div>
+          </div>
 
-      {/* STATS STRIP */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "24px" }}>
-        <div style={{ background: "#ffffff", padding: "16px", borderRadius: "var(--tr-radius-md)", border: "1px solid var(--tr-border)" }}>
-          <div style={{ fontSize: "22px", fontWeight: "800", color: "var(--tr-text-heading)" }}>{assignments.length}</div>
-          <div style={{ fontSize: "12.5px", color: "var(--tr-text-muted)" }}>Active Assignments</div>
-        </div>
-        <div style={{ background: "#ffffff", padding: "16px", borderRadius: "var(--tr-radius-md)", border: "1px solid var(--tr-border)" }}>
-          <div style={{ fontSize: "22px", fontWeight: "800", color: "#d97706" }}>{pendingCount}</div>
-          <div style={{ fontSize: "12.5px", color: "var(--tr-text-muted)" }}>Pending Evaluation</div>
-        </div>
-        <div style={{ background: "#ffffff", padding: "16px", borderRadius: "var(--tr-radius-md)", border: "1px solid var(--tr-border)" }}>
-          <div style={{ fontSize: "22px", fontWeight: "800", color: "#059669" }}>{gradedCount}</div>
-          <div style={{ fontSize: "12.5px", color: "var(--tr-text-muted)" }}>Evaluated & Published</div>
-        </div>
-        <div style={{ background: "#ffffff", padding: "16px", borderRadius: "var(--tr-radius-md)", border: "1px solid var(--tr-border)" }}>
-          <div style={{ fontSize: "22px", fontWeight: "800", color: "var(--tr-primary)" }}>94.2%</div>
-          <div style={{ fontSize: "12.5px", color: "var(--tr-text-muted)" }}>Batch Average Score</div>
-        </div>
-      </div>
+          <div className="db-stat-card">
+            <div className="db-stat-left">
+              <div className="db-stat-icon-box" style={{ background: "#fef3c7", color: "#d97706" }}>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+              </div>
+              <div className="db-stat-data">
+                <span className="db-stat-value" style={{ color: "#d97706" }}>{pendingCount}</span>
+                <span className="db-stat-label">Pending Evaluation</span>
+              </div>
+            </div>
+          </div>
 
-      {/* FILTERS BAR */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "12px" }}>
-        {/* Status Filter Tabs */}
-        <div style={{ display: "flex", gap: "8px" }}>
-          <button
-            type="button"
-            onClick={() => setStatusFilter("all")}
+          <div className="db-stat-card">
+            <div className="db-stat-left">
+              <div className="db-stat-icon-box green">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <div className="db-stat-data">
+                <span className="db-stat-value">{gradedCount}</span>
+                <span className="db-stat-label">Evaluated & Passed</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="db-stat-card">
+            <div className="db-stat-left">
+              <div className="db-stat-icon-box gold">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+              </div>
+              <div className="db-stat-data">
+                <span className="db-stat-value">94.2%</span>
+                <span className="db-stat-label">Batch Avg Score</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Filter Pills Bar */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "12px" }}>
+          <div style={{ display: "flex", gap: "8px" }}>
+            {[
+              { id: "all", label: `All (${submissions.length})` },
+              { id: "pending", label: `Pending Review (${pendingCount})` },
+              { id: "graded", label: `Graded (${gradedCount})` },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setStatusFilter(tab.id)}
+                style={{
+                  padding: "8px 18px",
+                  borderRadius: "999px",
+                  fontSize: "13px",
+                  fontWeight: "700",
+                  border: statusFilter === tab.id ? "1px solid var(--sarthi-primary, #024a3a)" : "1px solid var(--sarthi-border, #e2e8f0)",
+                  background: statusFilter === tab.id ? "var(--sarthi-primary, #024a3a)" : "#ffffff",
+                  color: statusFilter === tab.id ? "#ffffff" : "var(--sarthi-text-body, #334155)",
+                  cursor: "pointer",
+                  transition: "all 0.18s ease",
+                  boxShadow: statusFilter === tab.id ? "0 2px 6px rgba(2,74,58,0.2)" : "none",
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <select
+            value={courseFilter}
+            onChange={(e) => setCourseFilter(e.target.value)}
             style={{
-              padding: "6px 14px",
-              borderRadius: "8px",
+              padding: "8px 14px",
+              borderRadius: "10px",
+              border: "1px solid var(--sarthi-border, #e2e8f0)",
               fontSize: "13px",
-              fontWeight: "700",
-              border: statusFilter === "all" ? "1px solid var(--tr-primary)" : "1px solid var(--tr-border)",
-              background: statusFilter === "all" ? "var(--tr-primary)" : "#ffffff",
-              color: statusFilter === "all" ? "#ffffff" : "var(--tr-text-body)",
+              color: "var(--sarthi-text-heading, #0a2920)",
+              background: "#ffffff",
               cursor: "pointer",
+              fontWeight: "600",
             }}
           >
-            All ({submissions.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setStatusFilter("pending")}
-            style={{
-              padding: "6px 14px",
-              borderRadius: "8px",
-              fontSize: "13px",
-              fontWeight: "700",
-              border: statusFilter === "pending" ? "1px solid #d97706" : "1px solid var(--tr-border)",
-              background: statusFilter === "pending" ? "#fef3c7" : "#ffffff",
-              color: statusFilter === "pending" ? "#92400e" : "var(--tr-text-body)",
-              cursor: "pointer",
-            }}
-          >
-            Pending Review ({pendingCount})
-          </button>
-          <button
-            type="button"
-            onClick={() => setStatusFilter("graded")}
-            style={{
-              padding: "6px 14px",
-              borderRadius: "8px",
-              fontSize: "13px",
-              fontWeight: "700",
-              border: statusFilter === "graded" ? "1px solid #059669" : "1px solid var(--tr-border)",
-              background: statusFilter === "graded" ? "#dcfce7" : "#ffffff",
-              color: statusFilter === "graded" ? "#166534" : "var(--tr-text-body)",
-              cursor: "pointer",
-            }}
-          >
-            Graded ({gradedCount})
-          </button>
+            <option value="all">All Specialization Courses</option>
+            {courses.map((c) => (
+              <option key={c.id} value={c.title}>{c.title}</option>
+            ))}
+          </select>
         </div>
 
-        {/* Course Dropdown Filter */}
-        <select
-          value={courseFilter}
-          onChange={(e) => setCourseFilter(e.target.value)}
-          className="trainer-select"
-          style={{ width: "auto", minWidth: "220px", height: "36px", padding: "0 12px" }}
-        >
-          <option value="all">All Courses</option>
-          {courses.map((c) => (
-            <option key={c.id} value={c.title}>{c.title}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* SUBMISSIONS TABLE */}
-      <div className="trainer-section-card">
-        <div className="trainer-table-wrap">
-          <table className="trainer-table">
-            <thead>
-              <tr>
-                <th>Trainee</th>
-                <th>Assignment Title</th>
-                <th>Course Domain</th>
-                <th>Files & Notes</th>
-                <th>Submitted</th>
-                <th>Score</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredSubmissions.length === 0 ? (
-                <tr>
-                  <td colSpan={8} style={{ textAlign: "center", padding: "32px", color: "var(--tr-text-muted)" }}>
-                    No submissions matched the selected filters.
-                  </td>
+        {/* Submissions Table in White Rounded Card */}
+        <div style={{ background: "#ffffff", border: "1px solid var(--sarthi-border, #e2e8f0)", borderRadius: "18px", padding: "24px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px" }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--sarthi-border, #e2e8f0)", color: "var(--sarthi-text-muted, #64748b)", fontSize: "12px" }}>
+                  <th style={{ padding: "12px 14px", fontWeight: "700" }}>Trainee Name</th>
+                  <th style={{ padding: "12px 14px", fontWeight: "700" }}>Assignment Practical</th>
+                  <th style={{ padding: "12px 14px", fontWeight: "700" }}>Division</th>
+                  <th style={{ padding: "12px 14px", fontWeight: "700" }}>Submission Date</th>
+                  <th style={{ padding: "12px 14px", fontWeight: "700" }}>Status</th>
+                  <th style={{ padding: "12px 14px", fontWeight: "700", textAlign: "right" }}>Action</th>
                 </tr>
-              ) : (
-                filteredSubmissions.map((sub) => (
-                  <tr key={sub.id}>
-                    <td>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <img
-                          src={sub.studentAvatar || "/images/student-img-1.jpg"}
-                          alt={sub.studentName}
-                          style={{ width: "34px", height: "34px", borderRadius: "50%", objectFit: "cover" }}
-                        />
-                        <div>
-                          <div style={{ fontWeight: "700", color: "var(--tr-text-heading)" }}>{sub.studentName}</div>
-                          <div style={{ fontSize: "11px", color: "var(--tr-text-muted)" }}>{sub.division}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <div style={{ fontWeight: "600", color: "var(--tr-text-heading)" }}>{sub.assignmentTitle}</div>
-                    </td>
-                    <td>
-                      <span style={{ fontSize: "12px", color: "var(--tr-text-muted)" }}>{sub.courseTitle}</span>
-                    </td>
-                    <td>
-                      <span style={{ fontSize: "11.5px", background: "var(--tr-surface-alt)", padding: "3px 8px", borderRadius: "4px", border: "1px solid var(--tr-border)" }}>
-                        📎 {sub.files?.length || 1} file(s)
-                      </span>
-                    </td>
-                    <td>
-                      <span style={{ fontSize: "12px", color: "var(--tr-text-muted)" }}>
-                        {new Date(sub.submittedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                    </td>
-                    <td>
-                      {sub.score !== null ? (
-                        <span style={{ fontWeight: "800", color: "#059669", fontSize: "13.5px" }}>
-                          {sub.score} / {sub.maxScore}
-                        </span>
-                      ) : (
-                        <span style={{ color: "var(--tr-text-light)", fontSize: "12px" }}>—</span>
-                      )}
-                    </td>
-                    <td>
-                      <span className={`trainer-status-tag ${sub.status === "graded" ? "tag-graded" : "tag-pending"}`}>
-                        {sub.status.toUpperCase()}
-                      </span>
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        className={`trainer-quick-btn ${sub.status === "pending" ? "trainer-btn-green" : "trainer-btn-outline"}`}
-                        style={{ height: "30px", padding: "0 12px", fontSize: "11.5px" }}
-                        onClick={() => setActiveModal({ type: "grading", data: sub })}
-                      >
-                        {sub.status === "pending" ? "Grade Now" : "Review Score"}
-                      </button>
+              </thead>
+              <tbody>
+                {filteredSubmissions.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ padding: "36px 14px", textAlign: "center", color: "var(--sarthi-text-muted, #64748b)" }}>
+                      No submissions match your active filter.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  filteredSubmissions.map((sub) => (
+                    <tr key={sub.id} style={{ borderBottom: "1px solid var(--sarthi-border, #f1f5f9)" }}>
+                      <td style={{ padding: "14px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <img
+                            src={sub.avatar || "/images/student-img-1.jpg"}
+                            alt={sub.studentName}
+                            style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }}
+                          />
+                          <div>
+                            <div style={{ fontWeight: "700", color: "var(--sarthi-text-heading, #0a2920)" }}>
+                              {sub.studentName}
+                            </div>
+                            <div style={{ fontSize: "11px", color: "var(--sarthi-text-muted, #64748b)" }}>
+                              {sub.rollNo || "IMD-TR-2025-04"}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{ padding: "14px" }}>
+                        <div style={{ fontWeight: "700", color: "var(--sarthi-text-heading, #0a2920)" }}>
+                          {sub.assignmentTitle}
+                        </div>
+                        <div style={{ fontSize: "11.5px", color: "var(--sarthi-text-muted, #64748b)" }}>
+                          {sub.courseTitle}
+                        </div>
+                      </td>
+                      <td style={{ padding: "14px", color: "var(--sarthi-text-body, #334155)" }}>
+                        <span style={{ fontSize: "12px", background: "var(--sarthi-surface-subtle, #f8faf9)", padding: "3px 8px", borderRadius: "6px", border: "1px solid var(--sarthi-border, #e2e8f0)" }}>
+                          {sub.division}
+                        </span>
+                      </td>
+                      <td style={{ padding: "14px", color: "var(--sarthi-text-muted, #64748b)" }}>
+                        {sub.submittedAt}
+                      </td>
+                      <td style={{ padding: "14px" }}>
+                        <span
+                          style={{
+                            fontSize: "11px",
+                            fontWeight: "800",
+                            padding: "3px 9px",
+                            borderRadius: "999px",
+                            background: sub.status === "graded" ? "#dcfce7" : "#fef3c7",
+                            color: sub.status === "graded" ? "#166534" : "#92400e",
+                            border: sub.status === "graded" ? "1px solid #bbf7d0" : "1px solid #fde68a",
+                          }}
+                        >
+                          {sub.status === "graded" ? `GRADED (${sub.grade}/100)` : "PENDING REVIEW"}
+                        </span>
+                      </td>
+                      <td style={{ padding: "14px", textAlign: "right" }}>
+                        <button
+                          type="button"
+                          className="db-btn-primary"
+                          style={{ padding: "6px 14px", fontSize: "12px", borderRadius: "8px" }}
+                          onClick={() => setActiveModal({ type: "grade_submission", data: sub })}
+                        >
+                          {sub.status === "graded" ? "View Rubric" : "Grade Now"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </TrainerShell>

@@ -30,97 +30,122 @@ export default function TrainerSettingsPage() {
 
   return (
     <TrainerShell placeholder="Search settings...">
-      <div style={{ maxWidth: "800px" }}>
-        <div style={{ marginBottom: "24px" }}>
-          <h1 style={{ fontSize: "24px", fontWeight: "800", color: "var(--tr-text-heading)", margin: "0 0 4px 0" }}>
-            Faculty Profile & LMS Preferences
+      <div style={{ padding: "28px 36px 64px 36px", maxWidth: "900px", margin: "0 auto", width: "100%" }}>
+        {/* Page Header (Apple Design Hierarchy) */}
+        <div style={{ marginBottom: "28px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+            <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "var(--sarthi-emerald, #059669)" }} />
+            <span style={{ fontSize: "11px", fontWeight: "800", color: "#065f46", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+              FACULTY DOSSIER & PREFERENCES
+            </span>
+          </div>
+          <h1 style={{ fontSize: "30px", fontWeight: "800", color: "var(--sarthi-text-heading, #0a2920)", margin: "0 0 6px 0", letterSpacing: "-0.5px" }}>
+            Faculty Profile & LMS Settings
           </h1>
-          <p style={{ fontSize: "14px", color: "var(--tr-text-muted)", margin: 0 }}>
+          <p style={{ fontSize: "14px", color: "var(--sarthi-text-muted, #64748b)", margin: 0 }}>
             Manage official credentials, division designation, consultation office hours, and grading templates.
           </p>
         </div>
 
         {savedMsg && (
-          <div style={{ background: "#dcfce7", border: "1px solid #10b981", color: "#166534", padding: "12px 16px", borderRadius: "var(--tr-radius-md)", marginBottom: "20px", fontSize: "13.5px", fontWeight: "700" }}>
+          <div style={{ background: "#dcfce7", border: "1px solid #10b981", color: "#166534", padding: "12px 16px", borderRadius: "12px", marginBottom: "20px", fontSize: "13.5px", fontWeight: "700" }}>
             ✓ {savedMsg}
           </div>
         )}
 
         <form onSubmit={handleSave}>
-          <div className="trainer-section-card" style={{ display: "flex", flexDirection: "column", gap: "20px", marginBottom: "24px" }}>
-            <h2 className="trainer-section-title" style={{ fontSize: "16px", borderBottom: "1px solid var(--tr-border)", paddingBottom: "12px" }}>
-              <span>👨‍🏫</span> Official Faculty Dossier
-            </h2>
-
-            <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-              <img src={trainer.avatar || "/images/student-img-1.jpg"} alt={trainer.name} style={{ width: "72px", height: "72px", borderRadius: "50%", objectFit: "cover", border: "3px solid var(--tr-accent-teal)" }} />
+          <div style={{ background: "#ffffff", border: "1px solid var(--sarthi-border, #e2e8f0)", borderRadius: "18px", padding: "28px", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", marginBottom: "24px", display: "flex", flexDirection: "column", gap: "20px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "20px", borderBottom: "1px solid var(--sarthi-border, #e2e8f0)", paddingBottom: "20px" }}>
+              <img
+                src={trainer.avatar || "/images/student-img-1.jpg"}
+                alt={trainer.name}
+                style={{ width: "72px", height: "72px", borderRadius: "50%", objectFit: "cover", border: "3px solid #059669" }}
+              />
               <div>
-                <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: "var(--tr-text-heading)" }}>{trainer.name}</h3>
-                <div style={{ fontSize: "13px", color: "var(--tr-text-muted)", marginTop: "2px" }}>{trainer.email}</div>
-                <div style={{ fontSize: "12px", color: "#059669", fontWeight: "700", marginTop: "2px" }}>India Meteorological Department (MoES)</div>
+                <h3 style={{ margin: 0, fontSize: "20px", fontWeight: "800", color: "var(--sarthi-text-heading, #0a2920)" }}>{trainer.name}</h3>
+                <div style={{ fontSize: "13px", color: "var(--sarthi-text-muted, #64748b)", marginTop: "2px" }}>{trainer.email}</div>
+                <div style={{ fontSize: "12px", color: "#059669", fontWeight: "700", marginTop: "4px" }}>
+                  India Meteorological Department &bull; Ministry of Earth Sciences
+                </div>
               </div>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-              <div className="trainer-form-group">
-                <label className="trainer-label">Full Name & Honorific:</label>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="trainer-input" />
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "12.5px", fontWeight: "700", color: "var(--sarthi-text-heading, #0a2920)" }}>Full Name & Honorific:</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  style={{ padding: "10px 14px", borderRadius: "10px", border: "1px solid var(--sarthi-border, #e2e8f0)", fontSize: "13px" }}
+                />
               </div>
 
-              <div className="trainer-form-group">
-                <label className="trainer-label">Official Designation:</label>
-                <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required className="trainer-input" />
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "12.5px", fontWeight: "700", color: "var(--sarthi-text-heading, #0a2920)" }}>Official Designation:</label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                  style={{ padding: "10px 14px", borderRadius: "10px", border: "1px solid var(--sarthi-border, #e2e8f0)", fontSize: "13px" }}
+                />
               </div>
             </div>
 
-            <div className="trainer-form-group">
-              <label className="trainer-label">Division / Center:</label>
-              <input type="text" value={division} onChange={(e) => setDivision(e.target.value)} required className="trainer-input" />
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label style={{ fontSize: "12.5px", fontWeight: "700", color: "var(--sarthi-text-heading, #0a2920)" }}>Division / Directorate:</label>
+              <input
+                type="text"
+                value={division}
+                onChange={(e) => setDivision(e.target.value)}
+                required
+                style={{ padding: "10px 14px", borderRadius: "10px", border: "1px solid var(--sarthi-border, #e2e8f0)", fontSize: "13px" }}
+              />
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-              <div className="trainer-form-group">
-                <label className="trainer-label">Office Consultation Hours:</label>
-                <input type="text" value={officeHours} onChange={(e) => setOfficeHours(e.target.value)} className="trainer-input" />
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "12.5px", fontWeight: "700", color: "var(--sarthi-text-heading, #0a2920)" }}>Consultation Office Hours:</label>
+                <input
+                  type="text"
+                  value={officeHours}
+                  onChange={(e) => setOfficeHours(e.target.value)}
+                  style={{ padding: "10px 14px", borderRadius: "10px", border: "1px solid var(--sarthi-border, #e2e8f0)", fontSize: "13px" }}
+                />
               </div>
 
-              <div className="trainer-form-group">
-                <label className="trainer-label">Office Location / Room:</label>
-                <input type="text" value={roomLocation} onChange={(e) => setRoomLocation(e.target.value)} className="trainer-input" />
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "12.5px", fontWeight: "700", color: "var(--sarthi-text-heading, #0a2920)" }}>Office Location / Room:</label>
+                <input
+                  type="text"
+                  value={roomLocation}
+                  onChange={(e) => setRoomLocation(e.target.value)}
+                  style={{ padding: "10px 14px", borderRadius: "10px", border: "1px solid var(--sarthi-border, #e2e8f0)", fontSize: "13px" }}
+                />
               </div>
             </div>
 
-            <div className="trainer-form-group">
-              <label className="trainer-label">Scientific Biography & Specialization Summary:</label>
-              <textarea rows={4} value={bio} onChange={(e) => setBio(e.target.value)} className="trainer-textarea" />
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label style={{ fontSize: "12.5px", fontWeight: "700", color: "var(--sarthi-text-heading, #0a2920)" }}>Scientific Biography & Specialization:</label>
+              <textarea
+                rows={4}
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                style={{ padding: "10px 14px", borderRadius: "10px", border: "1px solid var(--sarthi-border, #e2e8f0)", fontSize: "13px", resize: "vertical" }}
+              />
             </div>
-          </div>
 
-          <div className="trainer-section-card" style={{ display: "flex", flexDirection: "column", gap: "14px", marginBottom: "24px" }}>
-            <h2 className="trainer-section-title" style={{ fontSize: "16px", borderBottom: "1px solid var(--tr-border)", paddingBottom: "12px" }}>
-              <span>🔔</span> Notification & Alert Triggers
-            </h2>
-
-            <label style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13.5px", cursor: "pointer" }}>
-              <input type="checkbox" defaultChecked />
-              <span>Instant push alert when trainees submit lab assignments</span>
-            </label>
-
-            <label style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13.5px", cursor: "pointer" }}>
-              <input type="checkbox" defaultChecked />
-              <span>Highlight urgent trainee doubts in Doubt Clearance console</span>
-            </label>
-
-            <label style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13.5px", cursor: "pointer" }}>
-              <input type="checkbox" defaultChecked />
-              <span>Automated email reminder 30 mins before scheduled live masterclasses</span>
-            </label>
-          </div>
-
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>
-            <button type="submit" className="trainer-quick-btn trainer-btn-green" style={{ height: "44px", padding: "0 28px" }}>
-              Save Configuration
-            </button>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "10px" }}>
+              <button
+                type="submit"
+                className="db-btn-primary"
+                style={{ padding: "10px 24px", fontSize: "13.5px", borderRadius: "10px" }}
+              >
+                Save Dossier Changes
+              </button>
+            </div>
           </div>
         </form>
       </div>

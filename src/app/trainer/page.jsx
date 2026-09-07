@@ -211,15 +211,15 @@ export default function TrainerDashboardPage() {
                   type="button"
                   onClick={() => setActiveModal({ type: "new_course", data: null })}
                   style={{
-                    background: "rgba(255, 255, 255, 0.18)",
-                    color: "#ffffff",
-                    border: "1px solid rgba(255, 255, 255, 0.4)",
-                    padding: "10px 18px",
+                    background: "#ffffff",
+                    color: "#000000",
+                    border: "1px solid rgba(0, 0, 0, 0.12)",
+                    padding: "10px 20px",
                     borderRadius: "999px",
                     fontSize: "13px",
                     fontWeight: "700",
                     cursor: "pointer",
-                    backdropFilter: "blur(4px)",
+                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
                     transition: "all 0.2s ease",
                   }}
                 >
