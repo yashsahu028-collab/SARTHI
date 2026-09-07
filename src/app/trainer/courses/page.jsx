@@ -11,11 +11,14 @@ export default function TrainerCoursesPage() {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const { courses, toggleCourseStatus, setActiveModal } = useTrainer();
 
-  const categories = ["All", "Remote Sensing", "Modeling", "Radar Meteorology", "Climatology"];
+  const categories = React.useMemo(() => {
+    const list = Array.from(new Set(courses.map((c) => c.category).filter(Boolean)));
+    return ["All", ...list];
+  }, [courses]);
 
   const filteredCourses = courses.filter((c) => {
-    const matchesCat = selectedCategory === "All" || c.category.toLowerCase().includes(selectedCategory.toLowerCase());
-    const matchesSearch = c.title.toLowerCase().includes(searchQuery.toLowerCase()) || c.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCat = selectedCategory === "All" || (c.category && c.category.toLowerCase().includes(selectedCategory.toLowerCase()));
+    const matchesSearch = (c.title && c.title.toLowerCase().includes(searchQuery.toLowerCase())) || (c.description && c.description.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesCat && matchesSearch;
   });
 

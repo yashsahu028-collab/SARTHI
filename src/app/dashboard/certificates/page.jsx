@@ -11,10 +11,24 @@ export default function CertificatesPage() {
   const [activeModalCert, setActiveModalCert] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
 
-  const filteredCerts = certificates.filter((c) => {
+  const filteredCerts = certificates.map((c) => ({
+    ...c,
+    title: c.courseTitle || c.title || "Professional Certification",
+    id: c.certificateNumber || c.certificateId || c.id,
+    track: c.track || "Verified Academy Credential",
+    authority: c.authority || "SARTHI Digital Academy",
+    issueDate: c.issuedAt ? new Date(c.issuedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : (c.issueDate || "August 2026"),
+    score: c.score || 95,
+    skills: Array.isArray(c.skills) && c.skills.length > 0 ? c.skills : ["Full Stack Web Development", "Next.js & React 19", "Database Architecture", "Cloud Deployment"],
+    verificationUrl: c.verifyUrl || `/verify/${c.certificateNumber || c.id}`,
+  })).filter((c) => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
-    return c.title.toLowerCase().includes(q) || c.id.toLowerCase().includes(q) || c.skills.some((s) => s.toLowerCase().includes(q));
+    return (
+      (c.title && c.title.toLowerCase().includes(q)) ||
+      (c.id && c.id.toLowerCase().includes(q)) ||
+      (c.skills && c.skills.some((s) => s.toLowerCase().includes(q)))
+    );
   });
 
   const handleCopy = (id) => {

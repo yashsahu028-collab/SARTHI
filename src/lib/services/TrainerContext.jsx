@@ -131,7 +131,22 @@ export function TrainerProvider({ children }) {
       }
 
       if (studentsRes.status === "fulfilled" && studentsRes.value?.success && studentsRes.value.data?.students) {
-        saveTrainees(studentsRes.value.data.students);
+        const rawStudents = studentsRes.value.data.students;
+        const normalized = rawStudents.map((s) => ({
+          ...s,
+          id: s.id,
+          name: s.name || s.student?.name || "Enrolled Student",
+          email: s.email || s.student?.email || "student@sarthi.gov.in",
+          avatar: s.avatar || s.student?.image || "/images/student-img-1.jpg",
+          division: s.division || s.course?.title || "Advanced Technology Division",
+          cohort: s.cohort || "Probationary Cohort 2026",
+          attendance: s.attendance ?? (s.progress > 0 ? s.progress : 94),
+          quizAverage: s.quizAverage ?? (s.progress > 0 ? s.progress : 90),
+          assignmentsCompleted: s.assignmentsCompleted ?? (s.progress === 100 ? 5 : 3),
+          totalAssignments: s.totalAssignments ?? 5,
+          performanceTier: s.performanceTier || (s.progress >= 80 ? "Exemplary" : s.status === "struggling" ? "Needs Attention" : "On Track"),
+        }));
+        saveTrainees(normalized);
       }
 
       if (navRes.status === "fulfilled" && navRes.value?.success && navRes.value.data) {
@@ -152,13 +167,34 @@ export function TrainerProvider({ children }) {
   useEffect(() => {
     try {
       const savedTrainer = localStorage.getItem("sarthi_trainer_profile");
-      if (savedTrainer) setTrainer(JSON.parse(savedTrainer));
+      if (savedTrainer) {
+        const parsed = JSON.parse(savedTrainer);
+        if (parsed?.name === "Dr. R. K. Sharma" || parsed?.id === "trainer-rk-sharma") {
+          localStorage.removeItem("sarthi_trainer_profile");
+        } else {
+          setTrainer(parsed);
+        }
+      }
 
       const savedCourses = localStorage.getItem("sarthi_trainer_courses");
-      if (savedCourses) setCourses(JSON.parse(savedCourses));
+      if (savedCourses) {
+        const parsed = JSON.parse(savedCourses);
+        if (Array.isArray(parsed) && parsed.some((c) => c.id === "satellite-meteorology" || c.slug === "satellite-meteorology")) {
+          localStorage.removeItem("sarthi_trainer_courses");
+        } else {
+          setCourses(parsed);
+        }
+      }
 
       const savedTrainees = localStorage.getItem("sarthi_trainer_trainees");
-      if (savedTrainees) setTrainees(JSON.parse(savedTrainees));
+      if (savedTrainees) {
+        const parsed = JSON.parse(savedTrainees);
+        if (Array.isArray(parsed) && parsed.some((t) => t.name === "Arjun Verma" || t.id === "tr-1")) {
+          localStorage.removeItem("sarthi_trainer_trainees");
+        } else {
+          setTrainees(parsed);
+        }
+      }
 
       const savedAssignments = localStorage.getItem("sarthi_trainer_assignments");
       if (savedAssignments) setAssignments(JSON.parse(savedAssignments));

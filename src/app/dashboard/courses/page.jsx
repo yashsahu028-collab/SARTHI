@@ -13,9 +13,23 @@ export default function MyCoursesPage() {
   const [activeTab, setActiveTab] = useState("All");
   const [selectedCourseModal, setSelectedCourseModal] = useState(null);
 
+  const normalizedCourses = useMemo(() => {
+    return courses.map((c) => {
+      const progress = typeof c.progress === "number" ? c.progress : (c.progress?.percentage || 0);
+      const totalLessons = c.totalLessons || c.progress?.totalLessons || 10;
+      const completedLessons = c.completedLessons ?? c.progress?.completedLessons ?? Math.round((progress / 100) * totalLessons);
+      return {
+        ...c,
+        progress,
+        totalLessons,
+        completedLessons,
+      };
+    });
+  }, [courses]);
+
   // Filter courses by tab and search
   const filteredCourses = useMemo(() => {
-    return courses.filter((course) => {
+    return normalizedCourses.filter((course) => {
       // Tab filter
       if (activeTab === "In Progress" && (course.progress === 0 || course.progress === 100)) return false;
       if (activeTab === "Completed" && course.progress !== 100) return false;
@@ -31,13 +45,13 @@ export default function MyCoursesPage() {
       }
       return true;
     });
-  }, [courses, activeTab, searchQuery]);
+  }, [normalizedCourses, activeTab, searchQuery]);
 
   const stats = {
-    enrolled: courses.length,
-    active: courses.filter((c) => c.progress > 0 && c.progress < 100).length,
-    completed: courses.filter((c) => c.progress === 100).length,
-    hours: student.hoursLearned || 14.5,
+    enrolled: normalizedCourses.length,
+    active: normalizedCourses.filter((c) => c.progress > 0 && c.progress < 100).length,
+    completed: normalizedCourses.filter((c) => c.progress === 100).length,
+    hours: student.hoursLearned || 18.5,
   };
 
   return (

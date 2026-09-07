@@ -11,16 +11,19 @@ export default function TrainerStudentsPage() {
   const [tierFilter, setTierFilter] = useState("all");
   const { trainees, setActiveModal } = useTrainer();
 
-  const divisions = ["all", "NWP Modeling", "Satellite Meteorology", "Radar Operations", "Agrometeorological", "Cyclone Warning", "Aviation Weather", "Monsoon Forecasting"];
+  const divisions = useMemo(() => {
+    const list = Array.from(new Set(trainees.map((t) => t.division).filter(Boolean)));
+    return ["all", ...list];
+  }, [trainees]);
 
   const filteredTrainees = useMemo(() => {
     return trainees.filter((t) => {
-      const matchDiv = divisionFilter === "all" || t.division.toLowerCase().includes(divisionFilter.toLowerCase());
-      const matchTier = tierFilter === "all" || t.performanceTier.toLowerCase() === tierFilter.toLowerCase();
+      const matchDiv = divisionFilter === "all" || (t.division && t.division.toLowerCase().includes(divisionFilter.toLowerCase()));
+      const matchTier = tierFilter === "all" || (t.performanceTier && t.performanceTier.toLowerCase() === tierFilter.toLowerCase());
       const matchSearch =
-        t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.division.toLowerCase().includes(searchQuery.toLowerCase());
+        (t.name && t.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (t.email && t.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (t.division && t.division.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchDiv && matchTier && matchSearch;
     });
   }, [trainees, divisionFilter, tierFilter, searchQuery]);

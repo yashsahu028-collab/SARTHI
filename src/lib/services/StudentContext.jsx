@@ -112,8 +112,11 @@ export function StudentProvider({ children }) {
         saveQuizzes(quizzesRes.value.data.quizzes);
       }
 
-      if (certsRes.status === "fulfilled" && certsRes.value?.success && certsRes.value.data?.certificates) {
-        setCertificates(certsRes.value.data.certificates);
+      const certsList = certsRes.status === "fulfilled" 
+        ? (certsRes.value?.certificates || certsRes.value?.data?.certificates || [])
+        : [];
+      if (certsList.length > 0) {
+        setCertificates(certsList);
       }
 
       if (navRes.status === "fulfilled" && navRes.value?.success && navRes.value.data) {
@@ -146,19 +149,19 @@ export function StudentProvider({ children }) {
 
       const savedCourses = localStorage.getItem("sarthi_courses");
       if (savedCourses) {
-        const thumbMap = {
-          "satellite-meteorology": "/images/satellite-meteorology-thumb.jpg",
-          "nwp-modeling": "/images/nwp-modeling-thumb.jpg",
-          "doppler-radar-dynamics": "/images/doppler-radar-thumb.jpg",
-          "climate-trend-analytics": "/images/monsoon-climate-thumb.jpg",
-        };
-        const parsed = JSON.parse(savedCourses)
-          .filter((c) => c.id !== "python-met-data" && c.slug !== "python-met-data")
-          .map((c) => ({
-            ...c,
-            thumbnail: thumbMap[c.id] || c.thumbnail,
-          }));
-        setCourses(parsed);
+        try {
+          const parsed = JSON.parse(savedCourses);
+          const hasMock = Array.isArray(parsed) && parsed.some((c) => 
+            c.id === "satellite-meteorology" || c.slug === "satellite-meteorology" || c.id === "nwp-modeling"
+          );
+          if (hasMock) {
+            localStorage.removeItem("sarthi_courses");
+          } else {
+            setCourses(parsed);
+          }
+        } catch (e) {
+          localStorage.removeItem("sarthi_courses");
+        }
       }
 
       const savedConversations = localStorage.getItem("sarthi_conversations");
