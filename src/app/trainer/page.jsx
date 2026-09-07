@@ -5,6 +5,75 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import TrainerShell from "@/components/trainer/TrainerShell";
 import { useTrainer } from "@/lib/services/TrainerContext";
+import { FloatMotion } from "@/components/motion/MotionWrapper";
+import { CourseThumbnail } from "@/lib/services/courseVisuals";
+import "@/app/dashboard/dashboard.css";
+
+function ProgressIcon({ type }) {
+  const iconProps = {
+    width: 15,
+    height: 15,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    "aria-hidden": "true",
+  };
+
+  switch (type) {
+    case "satellite":
+      return (
+        <svg {...iconProps}>
+          <path d="M13 7 9 3 5 7l4 4" />
+          <path d="m17 11 4 4-4 4-4-4" />
+          <path d="m8 12 4 4" />
+          <path d="m16 8 4-4" />
+          <circle cx="12" cy="12" r="2" />
+        </svg>
+      );
+    case "radar":
+      return (
+        <svg {...iconProps}>
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 2a10 10 0 0 1 10 10" />
+          <path d="M12 6a6 6 0 0 1 6 6" />
+          <circle cx="12" cy="12" r="2" />
+          <line x1="12" y1="12" x2="19" y2="5" />
+        </svg>
+      );
+    case "nwp":
+      return (
+        <svg {...iconProps}>
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+        </svg>
+      );
+    case "monsoon":
+      return (
+        <svg {...iconProps}>
+          <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+          <path d="M16 14v6" />
+          <path d="M8 14v6" />
+          <path d="M12 16v6" />
+        </svg>
+      );
+    case "disaster":
+      return (
+        <svg {...iconProps}>
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          <path d="m9 12 2 2 4-4" />
+        </svg>
+      );
+    default:
+      return (
+        <svg {...iconProps}>
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 14 14" />
+        </svg>
+      );
+  }
+}
 
 export default function TrainerDashboardPage() {
   const router = useRouter();
@@ -12,427 +81,725 @@ export default function TrainerDashboardPage() {
   const {
     trainer,
     courses,
-    trainees,
     submissions,
     liveClasses,
     certificates,
-    conversations,
     setActiveModal,
   } = useTrainer();
 
   const pendingSubmissions = useMemo(() => {
-    return submissions.filter((s) => s.status === "pending");
+    return (submissions || []).filter((s) => s.status === "pending");
   }, [submissions]);
 
   const upcomingLive = useMemo(() => {
-    return liveClasses.find((l) => l.status === "upcoming" || l.status === "live") || liveClasses[0];
+    return (
+      (liveClasses || []).find((l) => l.status === "upcoming" || l.status === "live") ||
+      (liveClasses || [])[0] || {
+        id: "live-1",
+        title: "INSAT-3DR Multi-Spectral Radiance & Sounding",
+        courseName: "Satellite Meteorology & Remote Sensing",
+        day: "07",
+        month: "SEP",
+        time: "10:00 AM",
+        registeredCount: 84,
+      }
+    );
   }, [liveClasses]);
 
   const pendingCerts = useMemo(() => {
-    return certificates.filter((c) => c.status === "pending_approval");
+    return (certificates || []).filter((c) => c.status === "pending_approval");
   }, [certificates]);
 
-  const urgentDoubts = useMemo(() => {
-    return conversations.filter((c) => c.isUrgent || c.unreadCount > 0);
-  }, [conversations]);
+  // Primary active batch course
+  const activeCourse =
+    (courses || []).find((c) => c.status === "active") ||
+    courses[0] || {
+      id: "satellite-meteorology",
+      title: "Satellite Meteorology & Remote Sensing",
+      category: "Remote Sensing",
+      enrolledCount: 84,
+      totalLessons: 48,
+      durationHours: 18,
+      progress: 72,
+      nextLesson: "3. INSAT-3D & 3DR Radiance Analysis",
+      thumbnail: "/images/satellite-meteorology-thumb.jpg",
+    };
+
+  // Batch Competencies Data
+  const batchCompetencies = [
+    { id: 1, name: "Satellite Meteorology", pct: 92, iconType: "satellite" },
+    { id: 2, name: "Radar & Doppler Dynamics", pct: 84, iconType: "radar" },
+    { id: 3, name: "NWP Numerical Modeling", pct: 88, iconType: "nwp" },
+    { id: 4, name: "Synoptic Monsoon Dynamics", pct: 79, iconType: "monsoon" },
+    { id: 5, name: "Disaster Early Warning & Agromet", pct: 86, iconType: "disaster" },
+  ];
+
+  // Weekly instruction hours (Mini Histogram)
+  const weeklyInstructionHours = [
+    { day: "M", hours: 3.5, max: 4.5 },
+    { day: "T", hours: 4.0, max: 4.5 },
+    { day: "W", hours: 2.5, max: 4.5 },
+    { day: "T", hours: 4.2, max: 4.5 },
+    { day: "F", hours: 2.8, max: 4.5 },
+    { day: "S", hours: 0.0, max: 4.5 },
+    { day: "S", hours: 0.0, max: 4.5 },
+  ];
+
+  // Filtered courses for catalog grid
+  const filteredCourses = useMemo(() => {
+    if (!searchQuery.trim()) return courses || [];
+    return (courses || []).filter(
+      (c) =>
+        c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.category?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [courses, searchQuery]);
+
+  // Recent faculty activities
+  const recentFacultyActivities = [
+    {
+      id: "act-1",
+      type: "green",
+      title: "Graded: INSAT-3DR Radiance Lab (Mohit Raj)",
+      time: "20 mins ago",
+    },
+    {
+      id: "act-2",
+      type: "blue",
+      title: "Published: WRF Boundary Layer Quiz 4",
+      time: "3 hours ago",
+    },
+    {
+      id: "act-3",
+      type: "purple",
+      title: "Completed: Doppler Radar Live Class (72 attended)",
+      time: "1 day ago",
+    },
+    {
+      id: "act-4",
+      type: "gold",
+      title: "Endorsed Certificate: NWP Modeling Specialist",
+      time: "2 days ago",
+    },
+  ];
 
   return (
     <TrainerShell searchQuery={searchQuery} setSearchQuery={setSearchQuery}>
-      {/* 1. WELCOME HERO */}
-      <section className="trainer-hero-card" style={{ marginBottom: "28px" }}>
-        <div className="trainer-hero-glow"></div>
-        <div className="trainer-hero-left">
-          <div className="trainer-hero-tag">
-            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#a7f3d0" }}></span>
-            IMD Faculty Mission Control &bull; {trainer.division}
-          </div>
-          <h1 className="trainer-hero-name">
-            Welcome, {trainer.name} <span style={{ fontSize: "24px" }}>👨‍🏫</span>
-          </h1>
-          <p className="trainer-hero-desc">
-            You are managing <strong>{trainer.activeCoursesCount} active courses</strong> with <strong>{trainer.totalStudents} enrolled IMD trainees</strong>. There are <strong>{pendingSubmissions.length} pending assignment submissions</strong> requiring evaluation today.
-          </p>
-          <div className="trainer-hero-actions">
-            <button
-              type="button"
-              className="trainer-quick-btn trainer-btn-green"
-              onClick={() => setActiveModal({ type: "new_course", data: null })}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              <span>Create New Course</span>
-            </button>
-            <button
-              type="button"
-              className="trainer-quick-btn trainer-btn-outline"
-              onClick={() => setActiveModal({ type: "new_assignment", data: null })}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-              <span>Add Assignment</span>
-            </button>
-            <button
-              type="button"
-              className="trainer-quick-btn trainer-btn-outline"
-              onClick={() => setActiveModal({ type: "schedule_live", data: null })}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
-              <span>Schedule Live Class</span>
-            </button>
-          </div>
-        </div>
-      </section>
+      {/* ----------------------------------------------------------------
+          DASHBOARD 2-COLUMN GRID (Exact twin of Student Dashboard)
+          ---------------------------------------------------------------- */}
+      <div className="db-grid-layout">
+        {/* ==============================================================
+            CENTER COLUMN
+            ============================================================== */}
+        <div className="db-center-column">
+          {/* 1. WELCOME HERO (Identical cards & mascot) */}
+          <section className="db-hero-card">
+            <div className="db-hero-wave-bg"></div>
 
-      {/* 2. KPI STATS ROW */}
-      <section className="trainer-stats-grid" style={{ marginBottom: "28px" }}>
-        {/* Active Courses */}
-        <div className="trainer-stat-card">
-          <div className="trainer-stat-top">
-            <div className="trainer-stat-icon-box trainer-stat-icon-emerald">📚</div>
-            <span className="trainer-stat-badge trainer-stat-badge-green">Active</span>
-          </div>
-          <div className="trainer-stat-val">{courses.length}</div>
-          <div className="trainer-stat-lbl">Managed Courses</div>
-          <div style={{ fontSize: "11.5px", color: "var(--tr-text-light)", marginTop: "6px" }}>
-            {courses.filter((c) => c.status === "active").length} Published &bull; {courses.filter((c) => c.status === "draft").length} Draft
-          </div>
-        </div>
-
-        {/* Total Trainees */}
-        <div className="trainer-stat-card">
-          <div className="trainer-stat-top">
-            <div className="trainer-stat-icon-box trainer-stat-icon-teal">👥</div>
-            <span className="trainer-stat-badge trainer-stat-badge-green">+12 this batch</span>
-          </div>
-          <div className="trainer-stat-val">{trainer.totalStudents}</div>
-          <div className="trainer-stat-lbl">Enrolled Trainees</div>
-          <div style={{ fontSize: "11.5px", color: "var(--tr-text-light)", marginTop: "6px" }}>
-            Across 8 IMD Specialized Centers
-          </div>
-        </div>
-
-        {/* Pending Evaluations */}
-        <div className="trainer-stat-card">
-          <div className="trainer-stat-top">
-            <div className="trainer-stat-icon-box trainer-stat-icon-amber">📝</div>
-            <span className="trainer-stat-badge trainer-stat-badge-amber">Action Req.</span>
-          </div>
-          <div className="trainer-stat-val" style={{ color: "#d97706" }}>{pendingSubmissions.length}</div>
-          <div className="trainer-stat-lbl">Pending Evaluations</div>
-          <div style={{ fontSize: "11.5px", color: "var(--tr-text-light)", marginTop: "6px" }}>
-            Avg. grading turnaround &lt; 24h
-          </div>
-        </div>
-
-        {/* Pass Rate & Training Hours */}
-        <div className="trainer-stat-card">
-          <div className="trainer-stat-top">
-            <div className="trainer-stat-icon-box trainer-stat-icon-indigo">🎓</div>
-            <span className="trainer-stat-badge trainer-stat-badge-green">Exemplary</span>
-          </div>
-          <div className="trainer-stat-val">{trainer.averagePassRate}%</div>
-          <div className="trainer-stat-lbl">Average Pass Rate</div>
-          <div style={{ fontSize: "11.5px", color: "var(--tr-text-light)", marginTop: "6px" }}>
-            {trainer.totalTrainingHours}h Live Training Delivered
-          </div>
-        </div>
-      </section>
-
-      {/* 3. 2-COLUMN MAIN DASHBOARD GRID */}
-      <div className="trainer-grid-layout">
-        {/* ==================== CENTER COLUMN ==================== */}
-        <div className="trainer-center-column">
-          {/* PENDING SUBMISSIONS GRADING DESK */}
-          <div className="trainer-section-card">
-            <div className="trainer-section-header">
-              <div>
-                <h2 className="trainer-section-title">
-                  <span>📝</span> Pending Submissions for Evaluation
-                </h2>
-                <div className="trainer-section-subtitle">
-                  Review trainee lab NetCDF code, scripts, and assign marks & feedback
-                </div>
-              </div>
-              <Link href="/trainer/assignments" className="trainer-view-all-link">
-                View All ({submissions.length}) &rarr;
-              </Link>
-            </div>
-
-            {pendingSubmissions.length === 0 ? (
-              <div style={{ padding: "24px", textAlign: "center", color: "var(--tr-text-muted)" }}>
-                🎉 All trainee submissions are graded! No pending evaluations.
-              </div>
-            ) : (
-              <div className="trainer-table-wrap">
-                <table className="trainer-table">
-                  <thead>
-                    <tr>
-                      <th>Trainee</th>
-                      <th>Assignment & Course</th>
-                      <th>Division</th>
-                      <th>Submitted</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pendingSubmissions.slice(0, 4).map((sub) => (
-                      <tr key={sub.id}>
-                        <td>
-                          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                            <img
-                              src={sub.studentAvatar || "/images/student-img-1.jpg"}
-                              alt={sub.studentName}
-                              style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }}
-                            />
-                            <div>
-                              <div style={{ fontWeight: "700", color: "var(--tr-text-heading)" }}>{sub.studentName}</div>
-                              <div style={{ fontSize: "11.5px", color: "var(--tr-text-muted)" }}>{sub.studentEmail}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          <div style={{ fontWeight: "600", color: "var(--tr-text-heading)" }}>{sub.assignmentTitle}</div>
-                          <div style={{ fontSize: "11.5px", color: "var(--tr-text-muted)" }}>{sub.courseTitle}</div>
-                        </td>
-                        <td>
-                          <span style={{ fontSize: "12px", color: "var(--tr-text-body)" }}>{sub.division}</span>
-                        </td>
-                        <td>
-                          <span style={{ fontSize: "12px", color: "var(--tr-text-muted)" }}>
-                            {new Date(sub.submittedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                          </span>
-                        </td>
-                        <td>
-                          <button
-                            type="button"
-                            className="trainer-quick-btn trainer-btn-green"
-                            style={{ minHeight: "36px", padding: "8px 18px", fontSize: "12.5px", whiteSpace: "nowrap" }}
-                            onClick={() => setActiveModal({ type: "grading", data: sub })}
-                          >
-                            Evaluate & Grade
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* ACTIVE COURSES OVERVIEW */}
-          <div className="trainer-section-card">
-            <div className="trainer-section-header">
-              <div>
-                <h2 className="trainer-section-title">
-                  <span>📚</span> Managed Meteorological Courses
-                </h2>
-                <div className="trainer-section-subtitle">
-                  Curriculum progress, enrolled trainees, and syllabus module management
-                </div>
-              </div>
-              <Link href="/trainer/courses" className="trainer-view-all-link">
-                Manage Courses &rarr;
-              </Link>
-            </div>
-
-            <div className="trainer-courses-grid">
-              {courses.slice(0, 3).map((course) => (
-                <div key={course.id} className="trainer-course-card">
-                  <div className="trainer-course-thumb-wrap">
-                    <img src={course.thumbnail} alt={course.title} className="trainer-course-thumb" />
-                    <span className={`trainer-course-status-pill ${course.status === "active" ? "pill-active" : "pill-draft"}`}>
-                      {course.status}
-                    </span>
-                  </div>
-                  <div className="trainer-course-body">
-                    <span className="trainer-course-cat">{course.category}</span>
-                    <h3 className="trainer-course-title">{course.title}</h3>
-                    
-                    <div className="trainer-course-stats-bar">
-                      <span>👥 {course.enrolledCount} Trainees</span>
-                      <span>📖 {course.totalModules} Modules</span>
-                      <span>⏱️ {course.durationHours}h</span>
-                    </div>
-
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "6px", color: "var(--tr-text-muted)", fontWeight: "600" }}>
-                      <span>Batch Completion</span>
-                      <span style={{ color: "#059669", fontWeight: "700" }}>{course.completionRate}%</span>
-                    </div>
-                    <div className="trainer-progress-bar-wrap">
-                      <div className="trainer-progress-bar-fill" style={{ width: `${course.completionRate}%` }}></div>
-                    </div>
-
-                    <div className="trainer-course-footer">
-                      <Link
-                        href="/trainer/courses"
-                        className="trainer-quick-btn trainer-btn-outline"
-                        style={{ flex: 1, justifyContent: "center", height: "34px", fontSize: "12.5px" }}
-                      >
-                        Edit Syllabus
-                      </Link>
-                      <button
-                        type="button"
-                        className="trainer-quick-btn trainer-btn-green"
-                        style={{ height: "34px", padding: "0 12px", fontSize: "12.5px" }}
-                        onClick={() => setActiveModal({ type: "schedule_live", data: course })}
-                        title="Schedule Live Session for this course"
-                      >
-                        🎥
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* ==================== SIDE COLUMN ==================== */}
-        <div className="trainer-side-column">
-          {/* UPCOMING LIVE MASTERCLASS */}
-          {upcomingLive && (
-            <div className="trainer-section-card" style={{ background: "linear-gradient(135deg, #02231c 0%, #03362a 100%)", color: "#ffffff", border: "1px solid #064e3b" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
-                <span className="trainer-live-indicator">
-                  <span className="trainer-live-dot-pulse"></span>
-                  Next Masterclass
-                </span>
-                <span style={{ fontSize: "12px", color: "#a7f3d0", fontWeight: "700" }}>
-                  {upcomingLive.day} {upcomingLive.month} 2026
-                </span>
-              </div>
-
-              <h3 style={{ fontSize: "16px", fontWeight: "800", color: "#ffffff", margin: "0 0 6px 0", lineHeight: 1.35 }}>
-                {upcomingLive.title}
-              </h3>
-              <p style={{ fontSize: "12.5px", color: "#cbd5e1", margin: "0 0 14px 0" }}>
-                {upcomingLive.courseName} &bull; {upcomingLive.time}
-              </p>
-
-              <div style={{ background: "rgba(0, 0, 0, 0.3)", padding: "10px 12px", borderRadius: "8px", fontSize: "12px", color: "#a7f3d0", marginBottom: "16px", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
-                👥 {upcomingLive.registeredCount} Trainees Registered &bull; Batch 2025-26
-              </div>
-
-              <Link
-                href="/trainer/live"
-                className="trainer-quick-btn trainer-btn-green"
-                style={{ width: "100%", justifyContent: "center", textDecoration: "none", display: "flex", alignItems: "center", gap: "8px" }}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="23 7 16 12 23 17 23 7"></polygon>
-                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-                </svg>
-                <span>Enter Live Studio &rarr;</span>
-              </Link>
-            </div>
-          )}
-
-          {/* BATCH PERFORMANCE & COMPETENCY */}
-          <div className="trainer-section-card">
-            <h3 className="trainer-section-title" style={{ fontSize: "16px", marginBottom: "14px" }}>
-              <span>📊</span> Trainee Health & Tiers
-            </h3>
-            
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12.5px", fontWeight: "700", marginBottom: "4px" }}>
-                  <span style={{ color: "#059669" }}>Exemplary (90%+)</span>
-                  <span>48% (89 Trainees)</span>
-                </div>
-                <div className="trainer-progress-bar-wrap" style={{ height: "6px", marginBottom: 0 }}>
-                  <div style={{ height: "100%", background: "#10b981", width: "48%" }}></div>
-                </div>
-              </div>
-
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12.5px", fontWeight: "700", marginBottom: "4px" }}>
-                  <span style={{ color: "#0d9488" }}>On Track (75% - 89%)</span>
-                  <span>42% (78 Trainees)</span>
-                </div>
-                <div className="trainer-progress-bar-wrap" style={{ height: "6px", marginBottom: 0 }}>
-                  <div style={{ height: "100%", background: "#0d9488", width: "42%" }}></div>
-                </div>
-              </div>
-
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12.5px", fontWeight: "700", marginBottom: "4px" }}>
-                  <span style={{ color: "#d97706" }}>Needs Attention (&lt;75%)</span>
-                  <span>10% (19 Trainees)</span>
-                </div>
-                <div className="trainer-progress-bar-wrap" style={{ height: "6px", marginBottom: 0 }}>
-                  <div style={{ height: "100%", background: "#f59e0b", width: "10%" }}></div>
-                </div>
-              </div>
-            </div>
-
-            <Link
-              href="/trainer/students"
-              style={{ display: "block", textAlign: "center", fontSize: "12.5px", fontWeight: "700", color: "var(--tr-accent-teal)", marginTop: "14px", textDecoration: "none" }}
-            >
-              View Trainee Roster & Gradebook &rarr;
-            </Link>
-          </div>
-
-          {/* URGENT DOUBTS & MESSAGES */}
-          <div className="trainer-section-card">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-              <h3 className="trainer-section-title" style={{ fontSize: "16px" }}>
-                <span>💬</span> Trainee Doubts
-              </h3>
-              <Link href="/trainer/messages" style={{ fontSize: "12px", color: "var(--tr-accent-teal)", fontWeight: "700", textDecoration: "none" }}>
-                View All
-              </Link>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              {conversations.slice(0, 2).map((conv) => (
-                <Link
-                  key={conv.id}
-                  href="/trainer/messages"
-                  style={{ textDecoration: "none", padding: "10px 12px", background: "var(--tr-surface-alt)", borderRadius: "8px", border: "1px solid var(--tr-border)", display: "block" }}
+            <div className="db-hero-left">
+              <p className="db-hero-greeting">Welcome back,</p>
+              <h1 className="db-hero-name">
+                {trainer.name} <span className="db-hero-wave-emoji">👨‍🏫</span>
+              </h1>
+              <p className="db-hero-tagline">“Empowering India’s Meteorological Workforce.”</p>
+              <div style={{ display: "flex", gap: "10px", marginTop: "14px", flexWrap: "wrap" }}>
+                <Link href="/trainer/live" className="db-hero-action-btn" style={{ textDecoration: "none" }}>
+                  Launch Live Studio →
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setActiveModal({ type: "new_course", data: null })}
+                  style={{
+                    background: "rgba(255, 255, 255, 0.18)",
+                    color: "#ffffff",
+                    border: "1px solid rgba(255, 255, 255, 0.4)",
+                    padding: "10px 18px",
+                    borderRadius: "999px",
+                    fontSize: "13px",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    backdropFilter: "blur(4px)",
+                    transition: "all 0.2s ease",
+                  }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-                    <span style={{ fontWeight: "700", fontSize: "13px", color: "var(--tr-text-heading)" }}>{conv.studentName}</span>
-                    <span style={{ fontSize: "10.5px", color: "var(--tr-text-light)" }}>{conv.lastMessage?.timestamp}</span>
+                  + New Course
+                </button>
+              </div>
+            </div>
+
+            {/* Mascot Center Area with robot & blinking eyes */}
+            <div className="db-hero-mascot-area">
+              <span className="db-mascot-label">Faculty Mission Control!</span>
+              <FloatMotion duration={5} style={{ position: "relative", zIndex: 5 }}>
+                <div className="home-header-image-wrap db-mascot-wrapper" style={{ position: "relative", zIndex: 5 }}>
+                  <img
+                    src="/images/home-header-robo-imge.png"
+                    alt="Green robot character holding a stack of books."
+                    className="home-header-image db-mascot-img"
+                  />
+                  <div className="robo-eye-animation">
+                    <div className="robo-eye"></div>
                   </div>
-                  <div style={{ fontSize: "12px", color: "var(--tr-text-body)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {conv.lastMessage?.text}
+                  <div className="robo-eye-animation right">
+                    <div className="robo-eye"></div>
+                  </div>
+                </div>
+              </FloatMotion>
+              <svg className="db-floating-leaf leaf-1" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+              </svg>
+            </div>
+
+            {/* Right Pillars List */}
+            <div className="db-hero-pillars">
+              <div className="db-pillar-item">
+                <svg className="db-pillar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                <span>Instruct</span>
+              </div>
+              <div className="db-pillar-item">
+                <svg className="db-pillar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="9 11 12 14 22 4"></polyline>
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+                <span>Evaluate</span>
+              </div>
+              <div className="db-pillar-item">
+                <svg className="db-pillar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span>Mentor</span>
+              </div>
+              <div className="db-pillar-item">
+                <svg className="db-pillar-icon" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+                <span>Certify</span>
+              </div>
+            </div>
+          </section>
+
+          {/* 2. STATS ROW (4 CARDS - Exact twin of Student Dashboard) */}
+          <section className="db-stats-row">
+            {/* Card 1: Active Courses */}
+            <div className="db-stat-card" onClick={() => router.push("/trainer/courses")} style={{ cursor: "pointer" }}>
+              <div className="db-stat-left">
+                <div className="db-stat-icon-box green">
+                  <svg className="db-stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                  </svg>
+                </div>
+                <div className="db-stat-data">
+                  <span className="db-stat-value">{courses.length}</span>
+                  <span className="db-stat-label">Active Courses</span>
+                </div>
+              </div>
+              <svg className="db-stat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </div>
+
+            {/* Card 2: Enrolled Trainees */}
+            <div className="db-stat-card" onClick={() => router.push("/trainer/students")} style={{ cursor: "pointer" }}>
+              <div className="db-stat-left">
+                <div className="db-stat-icon-box purple">
+                  <svg className="db-stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                </div>
+                <div className="db-stat-data">
+                  <span className="db-stat-value">{trainer.totalStudents || 248}</span>
+                  <span className="db-stat-label">Enrolled Trainees</span>
+                </div>
+              </div>
+              <svg className="db-stat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </div>
+
+            {/* Card 3: Pending Reviews */}
+            <div className="db-stat-card" onClick={() => router.push("/trainer/assignments")} style={{ cursor: "pointer" }}>
+              <div className="db-stat-left">
+                <div className="db-stat-icon-box green">
+                  <svg className="db-stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                    <line x1="9" y1="12" x2="15" y2="12"></line>
+                    <line x1="9" y1="16" x2="13" y2="16"></line>
+                  </svg>
+                </div>
+                <div className="db-stat-data">
+                  <span className="db-stat-value">{pendingSubmissions.length}</span>
+                  <span className="db-stat-label">Pending Reviews</span>
+                </div>
+              </div>
+              <svg className="db-stat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </div>
+
+            {/* Card 4: Avg Pass Rate */}
+            <div className="db-stat-card" onClick={() => router.push("/trainer/analytics")} style={{ cursor: "pointer" }}>
+              <div className="db-stat-left">
+                <div className="db-stat-icon-box gold">
+                  <svg className="db-stat-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                </div>
+                <div className="db-stat-data">
+                  <span className="db-stat-value">{trainer.averagePassRate || 94}%</span>
+                  <span className="db-stat-label">Avg Pass Rate</span>
+                </div>
+              </div>
+              <svg className="db-stat-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </div>
+          </section>
+
+          {/* 3. ACTIVE BATCH SPOTLIGHT (Exact twin of db-continue-learning-card) */}
+          <section className="db-continue-learning-section">
+            <div className="db-section-header">
+              <h3 className="db-section-title">Active Batch Instruction</h3>
+              <Link href="/trainer/courses" className="db-view-all-link">
+                View all courses →
+              </Link>
+            </div>
+
+            <div className="db-continue-learning-card">
+              <div className="db-course-graphic-thumbnail">
+                <img
+                  src={activeCourse.thumbnail || "/images/satellite-meteorology-thumb.jpg"}
+                  alt={activeCourse.title}
+                  className="db-thumbnail-bg-img"
+                />
+                <div className="db-thumbnail-overlay"></div>
+                <div className="db-thumbnail-badge">ACTIVE BATCH</div>
+                <div className="db-thumbnail-play-circle">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#ffffff">
+                    <polygon points="6 3 20 12 6 21 6 3"></polygon>
+                  </svg>
+                </div>
+                <div className="db-thumbnail-title">{activeCourse.title}</div>
+              </div>
+
+              <div className="db-continue-details">
+                <h4 className="db-continue-course-title">{activeCourse.title}</h4>
+                <p className="db-next-lesson-text">
+                  IMD Faculty: {trainer.name} • Next Live: {upcomingLive.title || upcomingLive.topic} ({upcomingLive.time})
+                </p>
+
+                <div className="db-progress-bar-wrap">
+                  <div className="db-progress-track">
+                    <div
+                      className="db-progress-fill"
+                      style={{ width: `${activeCourse.progress || 72}%` }}
+                    ></div>
+                  </div>
+                  <span className="db-progress-percent">{activeCourse.progress || 72}%</span>
+                </div>
+
+                <div style={{ marginTop: "10px", display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+                  <Link href="/trainer/live" className="db-continue-btn" style={{ textDecoration: "none" }}>
+                    <svg className="db-play-triangle" viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    <span>Enter Live Studio</span>
+                  </Link>
+                  <Link
+                    href="/trainer/assignments"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "10px 18px",
+                      borderRadius: "10px",
+                      fontSize: "13px",
+                      fontWeight: "700",
+                      background: "var(--sarthi-surface-subtle, #f1f5f3)",
+                      color: "var(--sarthi-text-heading, #0a2920)",
+                      border: "1px solid var(--sarthi-border, #e2e8f0)",
+                      textDecoration: "none",
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    Grading Desk ({pendingSubmissions.length}) →
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* 4. BATCH COMPETENCY & MASTERY (Exact twin of db-progress-card) */}
+          <section className="db-progress-section">
+            <div className="db-section-header">
+              <h3 className="db-section-title">Batch Competency & Mastery</h3>
+              <Link href="/trainer/analytics" className="db-view-all-link">
+                View analytics →
+              </Link>
+            </div>
+
+            <div className="db-progress-card">
+              <div className="db-progress-main-row">
+                {/* Left: Circular Donut Gauge */}
+                <div className="db-donut-chart-container">
+                  <svg className="db-donut-svg" viewBox="0 0 140 140" aria-label={`Batch average pass rate ${trainer.averagePassRate || 94}%`}>
+                    <circle
+                      className="db-donut-track"
+                      cx="70"
+                      cy="70"
+                      r="54"
+                    />
+                    <circle
+                      className="db-donut-fill"
+                      cx="70"
+                      cy="70"
+                      r="54"
+                      strokeDasharray={339.29}
+                      strokeDashoffset={339.29 - (339.29 * (trainer.averagePassRate || 94)) / 100}
+                    />
+                  </svg>
+                  <div className="db-donut-center-text">
+                    <span className="db-donut-percent">{trainer.averagePassRate || 94}%</span>
+                    <span className="db-donut-label">Batch Avg</span>
+                  </div>
+                </div>
+
+                {/* Right: Progress List Rows */}
+                <div className="db-competency-list">
+                  {batchCompetencies.map((comp) => (
+                    <div key={comp.id} className="db-competency-row">
+                      <div className="db-comp-header">
+                        <div className="db-comp-left">
+                          <div className="db-comp-icon-box">
+                            <ProgressIcon type={comp.iconType} />
+                          </div>
+                          <span className="db-comp-name" title={comp.name}>{comp.name}</span>
+                        </div>
+                        <span className="db-comp-pct">{comp.pct}%</span>
+                      </div>
+                      <div className="db-comp-bar-track">
+                        <div
+                          className="db-comp-bar-fill"
+                          style={{ width: `${comp.pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bottom: Certification Milestone Callout */}
+              <div className="db-cert-banner">
+                <div className="db-cert-left">
+                  <div className="db-cert-icon-wrap" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="8" r="6" />
+                      <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" />
+                    </svg>
+                  </div>
+                  <div className="db-cert-text-wrap">
+                    <h5 className="db-cert-title">
+                      {pendingCerts.length > 0 ? `${pendingCerts.length} Pending Endorsements Awaiting Review` : "Batch 2025-26 on track for completion"}
+                    </h5>
+                    <p className="db-cert-subtitle">IMD Trainee Meteorologist & NWP Operational Certification Batch</p>
+                  </div>
+                </div>
+                <Link href="/trainer/certificates" className="db-cert-claim-btn">
+                  Review Approvals →
+                </Link>
+              </div>
+            </div>
+          </section>
+
+          {/* 5. FACULTY COURSE CATALOG (Exact twin of db-recommended-grid) */}
+          <section className="db-recommended-section">
+            <div className="db-section-header">
+              <h3 className="db-section-title">Faculty Course Catalog</h3>
+              <Link href="/trainer/courses" className="db-view-all-link">
+                View catalog ({courses.length}) →
+              </Link>
+            </div>
+
+            <div className="db-recommended-grid">
+              {filteredCourses.slice(0, 4).map((course) => (
+                <Link key={course.id} href="/trainer/courses" className="db-rec-card-apple">
+                  <div className="db-rec-thumb-wrap">
+                    <CourseThumbnail courseId={course.id} src={course.thumbnail} alt={course.title} />
+                    {course.category && (
+                      <span className="db-rec-category-badge">{course.category}</span>
+                    )}
+                  </div>
+                  <div className="db-rec-body">
+                    <h4 className="db-rec-course-title" title={course.title}>
+                      {course.title}
+                    </h4>
+                    <div className="db-rec-instructor-row">
+                      <span className="db-rec-instructor-name">{course.enrolledCount || 84} Trainees</span>
+                      <span className="db-rec-dot">·</span>
+                      <span className="db-rec-lesson-count">{course.totalLessons || 36} Lessons</span>
+                    </div>
+                    <div className="db-rec-action-link">
+                      <span>Manage curriculum</span>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M5 12h14M12 5l7 7-7 7" />
+                      </svg>
+                    </div>
                   </div>
                 </Link>
               ))}
             </div>
+          </section>
+        </div>
+
+        {/* ==============================================================
+            RIGHT UTILITY COLUMN (Exact twin of Student Dashboard)
+            ============================================================== */}
+        <aside className="db-right-column">
+          {/* 1. UPCOMING LIVE SESSIONS */}
+          <div className="db-upcoming-card">
+            <div className="db-section-header">
+              <h3 className="db-section-title" style={{ fontSize: "16px" }}>
+                Upcoming Live Sessions
+              </h3>
+              <Link href="/trainer/live" className="db-view-all-link">
+                Studio →
+              </Link>
+            </div>
+
+            <div className="db-upcoming-list">
+              {(liveClasses && liveClasses.length > 0 ? liveClasses.slice(0, 3) : [
+                { id: "live-1", title: "INSAT-3DR Multi-Spectral Radiance", day: "07", month: "SEP", time: "10:00 AM", status: "upcoming", registeredCount: 84 },
+                { id: "live-2", title: "Doppler Radar Reflectivity & VAD Analysis", day: "09", month: "SEP", time: "02:30 PM", status: "upcoming", registeredCount: 68 },
+                { id: "live-3", title: "WRF Mesoscale Data Assimilation Hands-on", day: "12", month: "SEP", time: "11:00 AM", status: "upcoming", registeredCount: 92 },
+              ]).map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => router.push("/trainer/live")}
+                  className="db-upcoming-item"
+                  style={{ cursor: "pointer" }}
+                >
+                  <div className="db-upcoming-left">
+                    <div className="db-calendar-badge">
+                      <span className="db-cal-day">{item.day || "07"}</span>
+                      <span className="db-cal-month">{item.month || "SEP"}</span>
+                    </div>
+                    <div className="db-upcoming-info">
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <h4 className="db-upcoming-title">{item.title || item.topic}</h4>
+                        {item.status === "live" && (
+                          <span style={{ background: "#ef4444", color: "#fff", fontSize: "8px", fontWeight: "800", padding: "1px 5px", borderRadius: "4px" }}>
+                            LIVE
+                          </span>
+                        )}
+                      </div>
+                      <p className="db-upcoming-time">{item.time} · {item.registeredCount || 84} Trainees</p>
+                      <p className="db-upcoming-author">Batch 2025-26 · National Studio</p>
+                    </div>
+                  </div>
+                  <svg className="db-upcoming-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* PENDING CERTIFICATES */}
-          {pendingCerts.length > 0 && (
-            <div className="trainer-section-card">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                <h3 className="trainer-section-title" style={{ fontSize: "16px" }}>
-                  <span>🎓</span> Pending Sign-Offs
-                </h3>
-                <span className="trainer-stat-badge trainer-stat-badge-amber">{pendingCerts.length} Pending</span>
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {pendingCerts.slice(0, 2).map((cert) => (
-                  <div key={cert.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 10px", background: "var(--tr-surface-alt)", borderRadius: "8px" }}>
-                    <div>
-                      <div style={{ fontSize: "13px", fontWeight: "700", color: "var(--tr-text-heading)" }}>{cert.studentName}</div>
-                      <div style={{ fontSize: "11px", color: "var(--tr-text-muted)" }}>{cert.courseTitle}</div>
-                    </div>
-                    <button
-                      type="button"
-                      className="trainer-quick-btn trainer-btn-outline"
-                      style={{ height: "28px", padding: "0 8px", fontSize: "11.5px" }}
-                      onClick={() => setActiveModal({ type: "certificate_preview", data: cert })}
-                    >
-                      Sign & Issue
-                    </button>
-                  </div>
-                ))}
-              </div>
+          {/* 2. RECENT FACULTY ACTIVITY */}
+          <div className="db-activity-card">
+            <div className="db-section-header">
+              <h3 className="db-section-title" style={{ fontSize: "16px" }}>
+                Faculty Activity
+              </h3>
+              <Link href="/trainer/analytics" className="db-view-all-link">
+                View all →
+              </Link>
             </div>
-          )}
-        </div>
+
+            <div className="db-activity-list">
+              {recentFacultyActivities.map((act) => (
+                <div key={act.id} className="db-activity-item">
+                  <div className={`db-activity-icon-circle ${act.type}`}>
+                    {act.type === "green" && (
+                      <svg className="db-act-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                      </svg>
+                    )}
+                    {act.type === "blue" && (
+                      <svg className="db-act-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                      </svg>
+                    )}
+                    {act.type === "purple" && (
+                      <svg className="db-act-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                      </svg>
+                    )}
+                    {act.type === "gold" && (
+                      <svg className="db-act-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2a1 1 0 0 1 1 1v1h4a1 1 0 0 1 1 1v3a4 4 0 0 1-4 4h-.1a5 5 0 0 1-3.9 3.9V18h3a1 1 0 1 1 0 2H7a1 1 0 1 1 0-2h3v-2.1A5 5 0 0 1 6.1 12H6a4 4 0 0 1-4-4V5a1 1 0 0 1 1-1h4V3a1 1 0 0 1 1-1h4zM4 6v2a2 2 0 0 0 2 2h.2c.1-.7.4-1.4.8-2H4zm14 2V6h-3c.4.6.7 1.3.8 2h2.2z" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="db-activity-details">
+                    <p className="db-activity-text">{act.title}</p>
+                    <p className="db-activity-time">{act.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 3. WEEKLY INSTRUCTION TARGET CARD (With 7-Day Mini Histogram) */}
+          <div className="db-target-card">
+            <div className="db-section-header">
+              <h3 className="db-section-title" style={{ fontSize: "16px", fontWeight: "700" }}>
+                Instruction Target
+              </h3>
+              <span className="db-target-pct-badge">85% Met</span>
+            </div>
+
+            <div className="db-target-stats">
+              <span className="db-target-value">
+                17.0 <span className="db-target-subtext">/ 20 hrs</span>
+              </span>
+              <span className="db-target-goal">3.0 hrs to weekly quota</span>
+            </div>
+
+            <div className="db-target-bar-wrap">
+              <div className="db-target-bar-fill" style={{ width: "85%" }} />
+            </div>
+
+            <div className="db-target-histogram-header">
+              <span className="db-target-hist-title">Weekly Lecture Breakdown</span>
+              <span className="db-target-hist-target">Target: 3.5h / day</span>
+            </div>
+
+            {/* 7-Day Mini Histogram */}
+            <div className="db-target-days-grid">
+              {weeklyInstructionHours.map((d, i) => (
+                <div key={i} className="db-target-day-col">
+                  <span className="db-target-day-hours">{d.hours}h</span>
+                  <div className="db-target-day-pill">
+                    <div
+                      className="db-target-day-fill"
+                      style={{
+                        height: `${(d.hours / d.max) * 100}%`,
+                        background: d.hours >= 3 ? "#059669" : "#10b981",
+                      }}
+                    />
+                  </div>
+                  <span className="db-target-day-name">{d.day}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="db-target-footer">
+              <span className="db-target-footer-dot" />
+              <span>Avg. 3.4h / day · On track for IMD Semester faculty target</span>
+            </div>
+          </div>
+
+          {/* 4. PENDING EVALUATIONS (Exact twin of db-deadlines-card) */}
+          <div className="db-deadlines-card">
+            <div className="db-section-header">
+              <h3 className="db-section-title" style={{ fontSize: "16px", fontWeight: "700" }}>
+                Pending Evaluations
+              </h3>
+              <Link href="/trainer/assignments" className="db-view-all-link">
+                View all ({pendingSubmissions.length}) →
+              </Link>
+            </div>
+
+            <div className="db-deadlines-list">
+              {(pendingSubmissions.length > 0
+                ? pendingSubmissions.slice(0, 3)
+                : [
+                    { id: "sub-1", studentName: "Mohit Raj", assignmentTitle: "INSAT-3DR Radiance Analysis Lab", submittedAt: "2h ago" },
+                    { id: "sub-2", studentName: "Ananya Sharma", assignmentTitle: "WRF Boundary Layer Modeling", submittedAt: "4h ago" },
+                    { id: "sub-3", studentName: "Rohan Patel", assignmentTitle: "Doppler Velocity Interpretation", submittedAt: "1d ago" },
+                  ]
+              ).map((task) => (
+                <div
+                  key={task.id}
+                  onClick={() => setActiveModal({ type: "grade_submission", data: task })}
+                  className="db-deadline-item"
+                  style={{ cursor: "pointer" }}
+                >
+                  <div className="db-deadline-left">
+                    <div className="db-deadline-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                        <line x1="9" y1="12" x2="15" y2="12"></line>
+                        <line x1="9" y1="16" x2="13" y2="16"></line>
+                      </svg>
+                    </div>
+                    <div className="db-deadline-content">
+                      <h4 className="db-deadline-title" title={`${task.studentName} — ${task.assignmentTitle}`}>
+                        {task.studentName} — {task.assignmentTitle}
+                      </h4>
+                      <div className="db-deadline-due-badge">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span>Submitted {task.submittedAt || "recently"}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="db-deadline-chevron">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="db-deadlines-footer">
+              <span className="db-deadlines-footer-dot" />
+              <span>Direct Evaluation · Syncs with IMD Grading Registry</span>
+            </div>
+          </div>
+
+          {/* 5. MOTIVATIONAL QUOTE CARD (Exact twin of db-quote-card) */}
+          <div className="db-quote-card">
+            <svg className="db-quote-leaf-graphic" viewBox="0 0 120 120" fill="none">
+              <path
+                d="M10 110C35 85 45 40 105 15C105 75 60 85 10 110Z"
+                fill="url(#quoteLeafGradCleanTrainer)"
+              />
+              <defs>
+                <linearGradient id="quoteLeafGradCleanTrainer" x1="10" y1="110" x2="105" y2="15" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#86efac" stopOpacity="0.35" />
+                  <stop offset="1" stopColor="#22c55e" stopOpacity="0.75" />
+                </linearGradient>
+              </defs>
+            </svg>
+
+            <div className="db-quote-symbol">““</div>
+            <h4 className="db-quote-text">
+              “The art of teaching is the art of assisting discovery.”
+            </h4>
+            <p className="db-quote-author">— Mark Van Doren · IMD Faculty Portal</p>
+          </div>
+        </aside>
       </div>
     </TrainerShell>
   );

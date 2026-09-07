@@ -97,143 +97,208 @@ export default function TrainerHeader({
   ];
 
   return (
-    <header className="trainer-topbar">
-      {/* Search Input Bar */}
-      <div className="trainer-topbar-left" ref={searchContainerRef}>
-        <div className="trainer-search-wrap">
-          <svg className="trainer-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <header className="db-topbar">
+      {/* Live Search Input Bar */}
+      <div className="db-search-bar-wrap" ref={searchContainerRef}>
+        <div className="db-search-bar">
+          <svg
+            className="db-search-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
           <input
             ref={searchInputRef}
             type="text"
-            className="trainer-search-input"
+            className="db-search-input"
             placeholder={placeholder}
             value={internalQuery}
             onChange={handleQueryChange}
-            onFocus={() => internalQuery.trim().length > 0 && setIsSearchOpen(true)}
+            onFocus={() => {
+              if (internalQuery.trim().length > 0) setIsSearchOpen(true);
+            }}
           />
-
-          {/* Search Dropdown Popover */}
-          {isSearchOpen && searchResults.total > 0 && (
-            <div style={{ position: "absolute", top: "48px", left: 0, right: 0, background: "#ffffff", border: "1px solid var(--tr-border)", borderRadius: "var(--tr-radius-md)", boxShadow: "var(--tr-shadow-lg)", padding: "12px", zIndex: 50 }}>
-              {searchResults.courses.length > 0 && (
-                <div style={{ marginBottom: "10px" }}>
-                  <div style={{ fontSize: "11px", fontWeight: "800", color: "var(--tr-text-muted)", textTransform: "uppercase", padding: "0 8px 4px 8px" }}>Courses</div>
-                  {searchResults.courses.map((c) => (
-                    <Link
-                      key={c.id}
-                      href="/trainer/courses"
-                      onClick={() => setIsSearchOpen(false)}
-                      style={{ display: "block", padding: "6px 8px", textDecoration: "none", color: "var(--tr-text-heading)", borderRadius: "6px", fontSize: "13px", fontWeight: "600" }}
-                    >
-                      📚 {c.title}
-                    </Link>
-                  ))}
-                </div>
-              )}
-
-              {searchResults.trainees.length > 0 && (
-                <div style={{ marginBottom: "10px" }}>
-                  <div style={{ fontSize: "11px", fontWeight: "800", color: "var(--tr-text-muted)", textTransform: "uppercase", padding: "0 8px 4px 8px" }}>Trainees</div>
-                  {searchResults.trainees.map((t) => (
-                    <Link
-                      key={t.id}
-                      href="/trainer/students"
-                      onClick={() => setIsSearchOpen(false)}
-                      style={{ display: "block", padding: "6px 8px", textDecoration: "none", color: "var(--tr-text-heading)", borderRadius: "6px", fontSize: "13px", fontWeight: "600" }}
-                    >
-                      👤 {t.name} ({t.division})
-                    </Link>
-                  ))}
-                </div>
-              )}
-
-              {searchResults.submissions.length > 0 && (
-                <div>
-                  <div style={{ fontSize: "11px", fontWeight: "800", color: "var(--tr-text-muted)", textTransform: "uppercase", padding: "0 8px 4px 8px" }}>Submissions</div>
-                  {searchResults.submissions.map((s) => (
-                    <Link
-                      key={s.id}
-                      href="/trainer/assignments"
-                      onClick={() => setIsSearchOpen(false)}
-                      style={{ display: "block", padding: "6px 8px", textDecoration: "none", color: "var(--tr-text-heading)", borderRadius: "6px", fontSize: "13px", fontWeight: "600" }}
-                    >
-                      📝 {s.studentName}: {s.assignmentTitle}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+          {internalQuery ? (
+            <button
+              onClick={() => {
+                setInternalQuery("");
+                setSearchQuery("");
+                setIsSearchOpen(false);
+              }}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#94a3b8",
+                cursor: "pointer",
+                padding: "2px",
+                display: "flex",
+              }}
+              title="Clear search"
+            >
+              ✕
+            </button>
+          ) : (
+            <span className="db-search-shortcut">⌘ K</span>
           )}
         </div>
+
+        {/* Live Search Results Floating Card */}
+        {isSearchOpen && (
+          <div className="db-search-dropdown">
+            {searchResults.total === 0 ? (
+              <div className="db-search-empty">
+                <p className="db-search-empty-title">No results found for &ldquo;{internalQuery}&rdquo;</p>
+                <p className="db-search-empty-sub">
+                  Try searching for courses, trainees, or assignments.
+                </p>
+              </div>
+            ) : (
+              <div className="db-search-results-list">
+                {/* Courses Group */}
+                {searchResults.courses.length > 0 && (
+                  <div className="db-search-group">
+                    <span className="db-search-group-title">Courses</span>
+                    {searchResults.courses.map((c) => (
+                      <Link
+                        key={c.id}
+                        href="/trainer/courses"
+                        onClick={() => setIsSearchOpen(false)}
+                        className="db-search-item"
+                      >
+                        <span className="db-search-item-title">📚 {c.title}</span>
+                        <span className="db-search-item-meta">{c.category} • {c.enrolledCount || 0} trainees</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+
+                {/* Trainees Group */}
+                {searchResults.trainees.length > 0 && (
+                  <div className="db-search-group">
+                    <span className="db-search-group-title">Trainees</span>
+                    {searchResults.trainees.map((t) => (
+                      <Link
+                        key={t.id}
+                        href="/trainer/students"
+                        onClick={() => setIsSearchOpen(false)}
+                        className="db-search-item"
+                      >
+                        <span className="db-search-item-title">👤 {t.name}</span>
+                        <span className="db-search-item-meta">{t.division} • {t.progress}% Progress</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+
+                {/* Submissions Group */}
+                {searchResults.submissions.length > 0 && (
+                  <div className="db-search-group">
+                    <span className="db-search-group-title">Submissions</span>
+                    {searchResults.submissions.map((s) => (
+                      <Link
+                        key={s.id}
+                        href="/trainer/assignments"
+                        onClick={() => setIsSearchOpen(false)}
+                        className="db-search-item"
+                      >
+                        <span className="db-search-item-title">📝 {s.studentName}</span>
+                        <span className="db-search-item-meta">{s.assignmentTitle} • {s.status}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Topbar Right Tools */}
-      <div className="trainer-topbar-right">
-        {/* Role Badge */}
-        <span className="trainer-role-badge-pill">
-          <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#059669" }}></span>
-          IMD Faculty Portal
-        </span>
-
-        {/* Quick Actions */}
+      {/* Topbar Right Actions: Action Button + Notification + Role Switcher + User Profile Chip */}
+      <div className="db-topbar-actions">
+        {/* Quick Action: Schedule Live */}
         <button
           type="button"
-          className="trainer-quick-btn trainer-btn-outline"
           onClick={() => setActiveModal({ type: "schedule_live", data: null })}
-          title="Schedule Live Session"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "8px 14px",
+            borderRadius: "999px",
+            background: "var(--sarthi-primary)",
+            color: "#ffffff",
+            fontSize: "12px",
+            fontWeight: "700",
+            border: "none",
+            cursor: "pointer",
+            boxShadow: "0 2px 6px rgba(5, 150, 105, 0.25)",
+            transition: "all 0.2s ease",
+          }}
+          title="Schedule Live Class"
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
           <span>Schedule Live</span>
-        </button>
-
-        <button
-          type="button"
-          className="trainer-quick-btn trainer-btn-green"
-          onClick={() => setActiveModal({ type: "broadcast", data: null })}
-          title="Broadcast Announcement"
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-          <span>Broadcast Notice</span>
         </button>
 
         {/* Notification Bell */}
         <div style={{ position: "relative" }}>
           <button
-            type="button"
-            className="trainer-icon-btn"
+            className="db-notification-btn"
+            title="Notifications"
+            aria-label="Notifications"
             onClick={() => {
               setShowNotifications(!showNotifications);
               setShowUserMenu(false);
             }}
-            title="Faculty Notifications"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              viewBox="0 0 24 24"
+              width="19"
+              height="19"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
             </svg>
-            <span className="trainer-notif-dot"></span>
+            <span className="db-notification-dot"></span>
           </button>
 
           {showNotifications && (
-            <div style={{ position: "absolute", top: "50px", right: 0, width: "320px", background: "#ffffff", border: "1px solid var(--tr-border)", borderRadius: "var(--tr-radius-md)", boxShadow: "var(--tr-shadow-xl)", padding: "12px", zIndex: 50 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "8px", borderBottom: "1px solid var(--tr-border)", marginBottom: "8px" }}>
-                <span style={{ fontWeight: "800", fontSize: "13px", color: "var(--tr-text-heading)" }}>Faculty Notifications</span>
-                <span style={{ fontSize: "11px", color: "var(--tr-accent-teal)", cursor: "pointer", fontWeight: "700" }}>Mark read</span>
+            <div className="db-dropdown-popover" style={{ width: "320px", right: 0 }}>
+              <div className="db-dropdown-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>Faculty Notifications</span>
+                <span style={{ fontSize: "11px", color: "var(--sarthi-primary)", fontWeight: "600", cursor: "pointer" }}>
+                  Mark all read
+                </span>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", padding: "6px" }}>
                 {notifications.map((n) => (
                   <Link
                     key={n.id}
                     href={n.link}
                     onClick={() => setShowNotifications(false)}
-                    style={{ textDecoration: "none", padding: "8px 10px", borderRadius: "8px", background: n.unread ? "var(--tr-primary-light)" : "transparent", display: "block" }}
+                    style={{
+                      textDecoration: "none",
+                      padding: "8px 10px",
+                      borderRadius: "10px",
+                      background: n.unread ? "var(--sarthi-mint-50)" : "transparent",
+                      border: n.unread ? "1px solid var(--sarthi-border)" : "1px solid transparent",
+                      display: "block",
+                    }}
                   >
-                    <div style={{ fontSize: "12.5px", fontWeight: "700", color: "var(--tr-text-heading)" }}>{n.title}</div>
-                    <div style={{ fontSize: "11.5px", color: "var(--tr-text-muted)", marginTop: "2px" }}>{n.desc}</div>
-                    <div style={{ fontSize: "10.5px", color: "var(--tr-text-light)", marginTop: "3px" }}>{n.time}</div>
+                    <div style={{ fontSize: "12px", fontWeight: "700", color: "var(--sarthi-text-heading)" }}>{n.title}</div>
+                    <div style={{ fontSize: "11px", color: "var(--sarthi-text-muted)", marginTop: "2px" }}>{n.desc}</div>
+                    <div style={{ fontSize: "10px", color: "var(--sarthi-text-light)", marginTop: "3px" }}>{n.time}</div>
                   </Link>
                 ))}
               </div>
@@ -241,38 +306,64 @@ export default function TrainerHeader({
           )}
         </div>
 
-        {/* Trainer Profile Avatar & Dropdown */}
+        {/* User Profile Chip */}
         <div style={{ position: "relative" }}>
           <div
+            className="db-top-user-chip"
             onClick={() => {
               setShowUserMenu(!showUserMenu);
               setShowNotifications(false);
             }}
-            style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", padding: "4px 8px", borderRadius: "999px", background: "var(--tr-surface-alt)" }}
           >
-            <img src={trainer.avatar || "/images/student-img-1.jpg"} alt={trainer.name} style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }} />
-            <span style={{ fontSize: "13px", fontWeight: "700", color: "var(--tr-text-heading)" }}>{trainer.name.split(" ")[0]}</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            <img
+              src={trainer.avatar || "/images/student-img-1.jpg"}
+              alt={trainer.name}
+              className="db-top-user-avatar"
+            />
+            <span className="db-top-user-name">{trainer.name}</span>
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ color: "#64748b" }}
+            >
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
           </div>
 
           {showUserMenu && (
-            <div style={{ position: "absolute", top: "48px", right: 0, width: "220px", background: "#ffffff", border: "1px solid var(--tr-border)", borderRadius: "var(--tr-radius-md)", boxShadow: "var(--tr-shadow-xl)", padding: "10px", zIndex: 50 }}>
-              <div style={{ padding: "6px 10px", borderBottom: "1px solid var(--tr-border)", marginBottom: "6px" }}>
-                <div style={{ fontSize: "13px", fontWeight: "800", color: "var(--tr-text-heading)" }}>{trainer.name}</div>
-                <div style={{ fontSize: "11px", color: "var(--tr-text-muted)" }}>{trainer.title}</div>
+            <div className="db-dropdown-popover" style={{ width: "220px", right: 0 }}>
+              <div className="db-dropdown-header">
+                <div style={{ fontWeight: "800" }}>{trainer.name}</div>
+                <div style={{ fontSize: "11px", color: "var(--sarthi-text-muted)", fontWeight: "400" }}>{trainer.title}</div>
               </div>
-              <Link href="/trainer/settings" onClick={() => setShowUserMenu(false)} style={{ display: "block", padding: "6px 10px", textDecoration: "none", color: "var(--tr-text-heading)", fontSize: "13px", borderRadius: "6px" }}>
-                Faculty Settings
-              </Link>
-              <Link href="/dashboard" onClick={() => setShowUserMenu(false)} style={{ display: "block", padding: "6px 10px", textDecoration: "none", color: "#059669", fontSize: "13px", fontWeight: "700", borderRadius: "6px" }}>
-                Switch to Student View &rarr;
-              </Link>
-              <button
-                onClick={() => router.push("/login")}
-                style={{ width: "100%", textAlign: "left", background: "none", border: "none", padding: "6px 10px", color: "#dc2626", fontSize: "13px", cursor: "pointer", borderTop: "1px solid var(--tr-border)", marginTop: "6px" }}
-              >
-                Log Out
-              </button>
+              <div className="db-notification-item">
+                <Link href="/trainer/settings" onClick={() => setShowUserMenu(false)} style={{ textDecoration: "none", color: "inherit" }}>
+                  Faculty Settings
+                </Link>
+              </div>
+              <div className="db-notification-item" style={{ color: "#dc2626" }}>
+                <button
+                  onClick={() => router.push("/login")}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "inherit",
+                    padding: 0,
+                    font: "inherit",
+                    cursor: "pointer",
+                    width: "100%",
+                    textAlign: "left",
+                  }}
+                >
+                  Log Out
+                </button>
+              </div>
             </div>
           )}
         </div>

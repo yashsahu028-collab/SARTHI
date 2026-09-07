@@ -1,4 +1,5 @@
 import { TrainerProvider } from "@/lib/services/TrainerContext";
+import "@/app/dashboard/dashboard.css";
 import "./trainer.css";
 
 export const metadata = {
