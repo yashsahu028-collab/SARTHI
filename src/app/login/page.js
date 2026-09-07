@@ -39,9 +39,11 @@ export default function LoginPage() {
     if (
       (email.trim().toLowerCase() === "trainer.demo@imd.gov.in" ||
         email.trim().toLowerCase() === "trainer@sarthi.gov.in" ||
+        email.trim().toLowerCase() === "teacher.demo@imd.gov.in" ||
+        email.trim().toLowerCase() === "teacher@sarthi.gov.in" ||
         email.trim().toLowerCase() === "faculty.demo@imd.gov.in" ||
         email.trim().toLowerCase() === "rk.sharma@imd.gov.in") &&
-      (password === "TrainerDemo@123" || password === "trainer123" || password === "Trainer@123" || password === "Faculty@123")
+      (password === "TrainerDemo@123" || password === "trainer123" || password === "Trainer@123" || password === "Faculty@123" || password === "TeacherDemo@123" || password === "teacher123" || password === "Teacher@123")
     ) {
       setSuccessMsg("Welcome back, Dr. R. K. Sharma! Redirecting to Faculty Command Center...");
       setTimeout(() => {

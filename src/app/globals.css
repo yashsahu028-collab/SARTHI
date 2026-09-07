@@ -218,6 +218,19 @@ body {
 
 .home-item-card.third-card {
   z-index: 10 !important;
+  bottom: 22% !important;
+}
+
+@media screen and (max-width: 991px) {
+  .home-item-card.third-card {
+    bottom: 24% !important;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .home-item-card.third-card {
+    bottom: 2% !important;
+  }
 }
 
 /* Interactive Suggestion Chips */
