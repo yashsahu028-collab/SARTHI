@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable react-hooks/set-state-in-effect */
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import {
   initialStudentProfile,
   initialCourses,
@@ -25,8 +25,108 @@ export function StudentProvider({ children }) {
   const [conversations, setConversations] = useState(initialConversations);
   const [settings, setSettings] = useState(initialSettings);
   const [activeLiveModal, setActiveLiveModal] = useState(null);
+  const [navCounts, setNavCounts] = useState(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  // Load from localStorage if present
+  // Persistence helpers
+  const saveAssignments = useCallback((newAssignments) => {
+    setAssignments(newAssignments);
+    try {
+      localStorage.setItem("sarthi_assignments", JSON.stringify(newAssignments));
+    } catch (e) {}
+  }, []);
+
+  const saveQuizzes = useCallback((newQuizzes) => {
+    setQuizzes(newQuizzes);
+    try {
+      localStorage.setItem("sarthi_quizzes", JSON.stringify(newQuizzes));
+    } catch (e) {}
+  }, []);
+
+  const saveSettings = useCallback((newSettings) => {
+    setSettings(newSettings);
+    if (newSettings.name) {
+      setStudent((prev) => ({ ...prev, name: newSettings.name }));
+    }
+    try {
+      localStorage.setItem("sarthi_settings", JSON.stringify(newSettings));
+    } catch (e) {}
+  }, []);
+
+  const saveCourses = useCallback((newCourses) => {
+    setCourses(newCourses);
+    try {
+      localStorage.setItem("sarthi_courses", JSON.stringify(newCourses));
+    } catch (e) {}
+  }, []);
+
+  const saveConversations = useCallback((newConvs) => {
+    setConversations(newConvs);
+    try {
+      localStorage.setItem("sarthi_conversations", JSON.stringify(newConvs));
+    } catch (e) {}
+  }, []);
+
+  // Fetch live state from student backend API routes
+  const refreshBackendData = useCallback(async () => {
+    setIsSyncing(true);
+    try {
+      const [
+        dashRes,
+        coursesRes,
+        asgRes,
+        liveRes,
+        quizzesRes,
+        certsRes,
+        navRes,
+      ] = await Promise.allSettled([
+        fetch("/api/student/dashboard").then((r) => r.json()),
+        fetch("/api/student/courses").then((r) => r.json()),
+        fetch("/api/student/assignments").then((r) => r.json()),
+        fetch("/api/student/live").then((r) => r.json()),
+        fetch("/api/student/quizzes").then((r) => r.json()),
+        fetch("/api/student/certificates").then((r) => r.json()),
+        fetch("/api/student/nav-counts").then((r) => r.json()),
+      ]);
+
+      if (dashRes.status === "fulfilled" && dashRes.value?.success && dashRes.value.data?.student) {
+        setStudent((prev) => ({
+          ...prev,
+          ...dashRes.value.data.student,
+        }));
+      }
+
+      if (coursesRes.status === "fulfilled" && coursesRes.value?.success && coursesRes.value.data?.courses) {
+        saveCourses(coursesRes.value.data.courses);
+      }
+
+      if (asgRes.status === "fulfilled" && asgRes.value?.success && asgRes.value.data?.assignments) {
+        saveAssignments(asgRes.value.data.assignments);
+      }
+
+      if (liveRes.status === "fulfilled" && liveRes.value?.success && liveRes.value.data?.liveClasses) {
+        setLiveClasses(liveRes.value.data.liveClasses);
+      }
+
+      if (quizzesRes.status === "fulfilled" && quizzesRes.value?.success && quizzesRes.value.data?.quizzes) {
+        saveQuizzes(quizzesRes.value.data.quizzes);
+      }
+
+      if (certsRes.status === "fulfilled" && certsRes.value?.success && certsRes.value.data?.certificates) {
+        setCertificates(certsRes.value.data.certificates);
+      }
+
+      if (navRes.status === "fulfilled" && navRes.value?.success && navRes.value.data) {
+        setNavCounts(navRes.value.data);
+      }
+    } catch (err) {
+      console.warn("Student API sync warning:", err);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [saveCourses, saveAssignments, saveQuizzes]);
+
+  // Load from localStorage first, then sync with live backend
   useEffect(() => {
     try {
       const savedAssignments = localStorage.getItem("sarthi_assignments");
@@ -59,7 +159,6 @@ export function StudentProvider({ children }) {
             thumbnail: thumbMap[c.id] || c.thumbnail,
           }));
         setCourses(parsed);
-        localStorage.setItem("sarthi_courses", JSON.stringify(parsed));
       }
 
       const savedConversations = localStorage.getItem("sarthi_conversations");
@@ -67,56 +166,25 @@ export function StudentProvider({ children }) {
     } catch (e) {
       console.warn("Storage read error:", e);
     }
-  }, []);
 
-  // Save changes helpers
-  const saveAssignments = (newAssignments) => {
-    setAssignments(newAssignments);
-    try {
-      localStorage.setItem("sarthi_assignments", JSON.stringify(newAssignments));
-    } catch (e) {}
-  };
-
-  const saveQuizzes = (newQuizzes) => {
-    setQuizzes(newQuizzes);
-    try {
-      localStorage.setItem("sarthi_quizzes", JSON.stringify(newQuizzes));
-    } catch (e) {}
-  };
-
-  const saveSettings = (newSettings) => {
-    setSettings(newSettings);
-    if (newSettings.name) {
-      setStudent((prev) => ({ ...prev, name: newSettings.name }));
-    }
-    try {
-      localStorage.setItem("sarthi_settings", JSON.stringify(newSettings));
-    } catch (e) {}
-  };
-
-  const saveCourses = (newCourses) => {
-    setCourses(newCourses);
-    try {
-      localStorage.setItem("sarthi_courses", JSON.stringify(newCourses));
-    } catch (e) {}
-  };
-
-  const saveConversations = (newConvs) => {
-    setConversations(newConvs);
-    try {
-      localStorage.setItem("sarthi_conversations", JSON.stringify(newConvs));
-    } catch (e) {}
-  };
+    refreshBackendData();
+  }, [refreshBackendData]);
 
   // Student Actions
-  const toggleBookmark = (courseId) => {
+  const toggleBookmark = async (courseId) => {
     const updated = courses.map((c) =>
       c.id === courseId ? { ...c, isBookmarked: !c.isBookmarked } : c
     );
     saveCourses(updated);
+
+    try {
+      await fetch(`/api/student/courses/${courseId}/bookmark`, { method: "POST" });
+    } catch (err) {
+      console.warn("Bookmark toggle backend sync error:", err);
+    }
   };
 
-  const submitAssignment = (assignmentId, { files = [], notes = "" }) => {
+  const submitAssignment = async (assignmentId, { files = [], notes = "" }) => {
     const fileNames = files.map((f) => (typeof f === "string" ? f : f.name));
     const now = new Date().toISOString();
     const updated = assignments.map((a) => {
@@ -134,13 +202,24 @@ export function StudentProvider({ children }) {
     saveAssignments(updated);
     setStudent((prev) => ({
       ...prev,
-      assignmentsDone: prev.assignmentsDone + 1,
-      xpPoints: prev.xpPoints + 50,
+      assignmentsDone: (prev.assignmentsDone || 0) + 1,
+      xpPoints: (prev.xpPoints || 0) + 50,
     }));
+
+    try {
+      await fetch("/api/student/assignments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignmentId, files: fileNames, notes }),
+      });
+    } catch (err) {
+      console.warn("Assignment submission backend sync error:", err);
+    }
+
     return true;
   };
 
-  const submitQuizAttempt = (quizId, answers) => {
+  const submitQuizAttempt = async (quizId, answers) => {
     const targetQuiz = quizzes.find((q) => q.id === quizId);
     if (!targetQuiz || !targetQuiz.questions) return null;
 
@@ -171,8 +250,18 @@ export function StudentProvider({ children }) {
     saveQuizzes(updated);
     setStudent((prev) => ({
       ...prev,
-      xpPoints: prev.xpPoints + pointsEarned,
+      xpPoints: (prev.xpPoints || 0) + pointsEarned,
     }));
+
+    try {
+      await fetch("/api/student/quizzes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quizId, answers }),
+      });
+    } catch (err) {
+      console.warn("Quiz submission backend sync error:", err);
+    }
 
     return {
       percentage,
@@ -183,73 +272,138 @@ export function StudentProvider({ children }) {
     };
   };
 
-  const sendMessage = (conversationId, text) => {
-    if (!text || !text.trim()) return;
-    const nowStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    const newMsg = {
-      id: "msg-" + Date.now(),
-      sender: "student",
-      text: text.trim(),
-      time: nowStr,
-      timestamp: new Date().toISOString(),
-    };
+  const registerForLiveClass = async (liveId) => {
+    const updated = liveClasses.map((item) =>
+      item.id === liveId
+        ? {
+            ...item,
+            isRegistered: true,
+            registeredCount: (item.registeredCount || 0) + 1,
+          }
+        : item
+    );
+    setLiveClasses(updated);
 
-    let updatedConvs = conversations.map((conv) => {
-      if (conv.id === conversationId) {
+    try {
+      await fetch("/api/student/live", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ liveId }),
+      });
+    } catch (err) {
+      console.warn("Live class registration sync error:", err);
+    }
+  };
+
+  const markLessonComplete = async (courseId, lessonId) => {
+    const updated = courses.map((c) => {
+      if (c.id === courseId) {
+        const completedLessons = Math.min(c.totalLessons, (c.completedLessons || 0) + 1);
+        const progress = Math.round((completedLessons / c.totalLessons) * 100);
+        return {
+          ...c,
+          completedLessons,
+          progress,
+          status: progress === 100 ? "completed" : "active",
+        };
+      }
+      return c;
+    });
+    saveCourses(updated);
+
+    try {
+      await fetch("/api/student/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseId, lessonId, progressPct: 100 }),
+      });
+    } catch (err) {
+      console.warn("Lesson complete sync error:", err);
+    }
+  };
+
+  const updateLessonProgress = (courseId, lessonId, progressPct) => {
+    const updated = courses.map((c) => {
+      if (c.id === courseId) {
+        return {
+          ...c,
+          progress: Math.min(100, Math.max(c.progress || 0, progressPct)),
+        };
+      }
+      return c;
+    });
+    saveCourses(updated);
+  };
+
+  const sendReplyToConversation = (convId, text) => {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+
+    const updated = conversations.map((conv) => {
+      if (conv.id === convId) {
         return {
           ...conv,
-          messages: [...conv.messages, newMsg],
-          unreadCount: 0,
+          lastMessage: {
+            text,
+            timestamp: "Just now",
+            sender: "user",
+          },
+          messages: [
+            ...conv.messages,
+            {
+              id: `msg-${Date.now()}`,
+              sender: "user",
+              text,
+              timestamp: timeStr,
+            },
+          ],
         };
       }
       return conv;
     });
-    saveConversations(updatedConvs);
 
-    // Auto-reply simulation from instructor after 1.5 seconds if message is to an instructor
-    const activeConv = conversations.find((c) => c.id === conversationId);
-    if (activeConv && !activeConv.isGroup) {
-      setTimeout(() => {
-        const replyMsg = {
-          id: "reply-" + Date.now(),
-          sender: "instructor",
-          text: `Thank you Mohit! I've noted: "${text.slice(0, 35)}...". Keep up the great scientific progress. Let's discuss in the upcoming lab session.`,
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          timestamp: new Date().toISOString(),
-        };
-        setConversations((currentConvs) => {
-          const updated = currentConvs.map((c) =>
-            c.id === conversationId ? { ...c, messages: [...c.messages, replyMsg] } : c
-          );
-          try {
-            localStorage.setItem("sarthi_conversations", JSON.stringify(updated));
-          } catch (e) {}
-          return updated;
-        });
-      }, 1500);
+    saveConversations(updated);
+  };
+
+  const updateSettings = async (newSettings) => {
+    saveSettings(newSettings);
+    try {
+      await fetch("/api/student/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newSettings),
+      });
+    } catch (err) {
+      console.warn("Settings sync error:", err);
     }
   };
 
+  const value = {
+    student,
+    courses,
+    liveClasses,
+    assignments,
+    quizzes,
+    certificates,
+    conversations,
+    settings,
+    navCounts,
+    isSyncing,
+    activeLiveModal,
+    setActiveLiveModal,
+    refreshBackendData,
+    toggleBookmark,
+    submitAssignment,
+    submitQuizAttempt,
+    registerForLiveClass,
+    markLessonComplete,
+    updateLessonProgress,
+    sendReplyToConversation,
+    updateSettings,
+  };
+
   return (
-    <StudentContext.Provider
-      value={{
-        student,
-        courses,
-        liveClasses,
-        assignments,
-        quizzes,
-        certificates,
-        conversations,
-        settings,
-        activeLiveModal,
-        setActiveLiveModal,
-        toggleBookmark,
-        submitAssignment,
-        submitQuizAttempt,
-        sendMessage,
-        saveSettings,
-      }}
-    >
+    <StudentContext.Provider value={value}>
       {children}
     </StudentContext.Provider>
   );
