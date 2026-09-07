@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable react-hooks/set-state-in-effect */
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import {
   initialTrainerProfile,
   initialTrainerCourses,
@@ -28,11 +28,127 @@ export function TrainerProvider({ children }) {
   const [certificates, setCertificates] = useState(initialTrainerCertificates);
   const [conversations, setConversations] = useState(initialTrainerConversations);
   const [broadcasts, setBroadcasts] = useState(initialBroadcasts);
+  const [navCounts, setNavCounts] = useState(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Active Global Modal State
-  const [activeModal, setActiveModal] = useState(null); // { type: 'grading'|'new_course'|'new_assignment'|'schedule_live'|'broadcast'|'certificate_preview'|'trainee_dossier', data: any }
+  // { type: 'new_course' | 'schedule_live' | 'grade_submission' | 'broadcast' | null, data: any }
+  const [activeModal, setActiveModal] = useState(null);
 
-  // Load from localStorage if present
+  // Persistence helpers
+  const saveTrainer = useCallback((data) => {
+    setTrainer(data);
+    try { localStorage.setItem("sarthi_trainer_profile", JSON.stringify(data)); } catch (e) {}
+  }, []);
+
+  const saveCourses = useCallback((data) => {
+    setCourses(data);
+    try { localStorage.setItem("sarthi_trainer_courses", JSON.stringify(data)); } catch (e) {}
+  }, []);
+
+  const saveTrainees = useCallback((data) => {
+    setTrainees(data);
+    try { localStorage.setItem("sarthi_trainer_trainees", JSON.stringify(data)); } catch (e) {}
+  }, []);
+
+  const saveAssignments = useCallback((data) => {
+    setAssignments(data);
+    try { localStorage.setItem("sarthi_trainer_assignments", JSON.stringify(data)); } catch (e) {}
+  }, []);
+
+  const saveSubmissions = useCallback((data) => {
+    setSubmissions(data);
+    try { localStorage.setItem("sarthi_trainer_submissions", JSON.stringify(data)); } catch (e) {}
+  }, []);
+
+  const saveLiveClasses = useCallback((data) => {
+    setLiveClasses(data);
+    try { localStorage.setItem("sarthi_trainer_live", JSON.stringify(data)); } catch (e) {}
+  }, []);
+
+  const saveQuizzes = useCallback((data) => {
+    setQuizzes(data);
+    try { localStorage.setItem("sarthi_trainer_quizzes", JSON.stringify(data)); } catch (e) {}
+  }, []);
+
+  const saveCertificates = useCallback((data) => {
+    setCertificates(data);
+    try { localStorage.setItem("sarthi_trainer_certs", JSON.stringify(data)); } catch (e) {}
+  }, []);
+
+  const saveConversations = useCallback((data) => {
+    setConversations(data);
+    try { localStorage.setItem("sarthi_trainer_convs", JSON.stringify(data)); } catch (e) {}
+  }, []);
+
+  const saveBroadcasts = useCallback((data) => {
+    setBroadcasts(data);
+    try { localStorage.setItem("sarthi_trainer_bcasts", JSON.stringify(data)); } catch (e) {}
+  }, []);
+
+  // Fetch live state from backend API routes
+  const refreshBackendData = useCallback(async () => {
+    setIsSyncing(true);
+    try {
+      const [
+        dashRes,
+        coursesRes,
+        asgRes,
+        subRes,
+        liveRes,
+        studentsRes,
+        navRes,
+        annRes,
+      ] = await Promise.allSettled([
+        fetch("/api/teacher/dashboard").then((r) => r.json()),
+        fetch("/api/teacher/courses").then((r) => r.json()),
+        fetch("/api/teacher/assignments").then((r) => r.json()),
+        fetch("/api/teacher/submissions").then((r) => r.json()),
+        fetch("/api/teacher/live-classes").then((r) => r.json()),
+        fetch("/api/teacher/students").then((r) => r.json()),
+        fetch("/api/teacher/nav-counts").then((r) => r.json()),
+        fetch("/api/teacher/announcements").then((r) => r.json()),
+      ]);
+
+      if (dashRes.status === "fulfilled" && dashRes.value?.success && dashRes.value.data?.teacher) {
+        saveTrainer(dashRes.value.data.teacher);
+      }
+
+      if (coursesRes.status === "fulfilled" && coursesRes.value?.success && coursesRes.value.data?.courses) {
+        saveCourses(coursesRes.value.data.courses);
+      }
+
+      if (asgRes.status === "fulfilled" && asgRes.value?.success && asgRes.value.data?.assignments) {
+        saveAssignments(asgRes.value.data.assignments);
+      }
+
+      if (subRes.status === "fulfilled" && subRes.value?.success && subRes.value.data?.submissions) {
+        saveSubmissions(subRes.value.data.submissions);
+      }
+
+      if (liveRes.status === "fulfilled" && liveRes.value?.success && liveRes.value.data?.liveClasses) {
+        saveLiveClasses(liveRes.value.data.liveClasses);
+      }
+
+      if (studentsRes.status === "fulfilled" && studentsRes.value?.success && studentsRes.value.data?.students) {
+        saveTrainees(studentsRes.value.data.students);
+      }
+
+      if (navRes.status === "fulfilled" && navRes.value?.success && navRes.value.data) {
+        setNavCounts(navRes.value.data);
+      }
+
+      if (annRes.status === "fulfilled" && annRes.value?.success && Array.isArray(annRes.value.data)) {
+        saveBroadcasts(annRes.value.data);
+      }
+    } catch (err) {
+      console.warn("Trainer API sync warning:", err);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [saveTrainer, saveCourses, saveAssignments, saveSubmissions, saveLiveClasses, saveTrainees, saveBroadcasts]);
+
+  // Load initial state: localStorage first, then sync with live backend
   useEffect(() => {
     try {
       const savedTrainer = localStorage.getItem("sarthi_trainer_profile");
@@ -67,63 +183,16 @@ export function TrainerProvider({ children }) {
     } catch (e) {
       console.warn("Trainer storage read error:", e);
     }
-  }, []);
 
-  // Persistence helpers
-  const saveTrainer = (data) => {
-    setTrainer(data);
-    try { localStorage.setItem("sarthi_trainer_profile", JSON.stringify(data)); } catch (e) {}
-  };
-
-  const saveCourses = (data) => {
-    setCourses(data);
-    try { localStorage.setItem("sarthi_trainer_courses", JSON.stringify(data)); } catch (e) {}
-  };
-
-  const saveTrainees = (data) => {
-    setTrainees(data);
-    try { localStorage.setItem("sarthi_trainer_trainees", JSON.stringify(data)); } catch (e) {}
-  };
-
-  const saveAssignments = (data) => {
-    setAssignments(data);
-    try { localStorage.setItem("sarthi_trainer_assignments", JSON.stringify(data)); } catch (e) {}
-  };
-
-  const saveSubmissions = (data) => {
-    setSubmissions(data);
-    try { localStorage.setItem("sarthi_trainer_submissions", JSON.stringify(data)); } catch (e) {}
-  };
-
-  const saveLiveClasses = (data) => {
-    setLiveClasses(data);
-    try { localStorage.setItem("sarthi_trainer_live", JSON.stringify(data)); } catch (e) {}
-  };
-
-  const saveQuizzes = (data) => {
-    setQuizzes(data);
-    try { localStorage.setItem("sarthi_trainer_quizzes", JSON.stringify(data)); } catch (e) {}
-  };
-
-  const saveCertificates = (data) => {
-    setCertificates(data);
-    try { localStorage.setItem("sarthi_trainer_certs", JSON.stringify(data)); } catch (e) {}
-  };
-
-  const saveConversations = (data) => {
-    setConversations(data);
-    try { localStorage.setItem("sarthi_trainer_convs", JSON.stringify(data)); } catch (e) {}
-  };
-
-  const saveBroadcasts = (data) => {
-    setBroadcasts(data);
-    try { localStorage.setItem("sarthi_trainer_bcasts", JSON.stringify(data)); } catch (e) {}
-  };
+    refreshBackendData();
+  }, [refreshBackendData]);
 
   // Actions: Grading Submissions
-  const gradeSubmission = (submissionId, { score, feedback = "" }) => {
+  const gradeSubmission = async (submissionId, { score, feedback = "" }) => {
     const numericScore = Number(score);
     const now = new Date().toISOString();
+    
+    // Optimistic local update
     const updated = submissions.map((sub) => {
       if (sub.id === submissionId) {
         return {
@@ -138,24 +207,41 @@ export function TrainerProvider({ children }) {
     });
     saveSubmissions(updated);
 
-    // Update pending count in trainer profile
     const pendingCount = updated.filter((s) => s.status === "pending").length;
     saveTrainer({
       ...trainer,
       pendingEvaluationsCount: pendingCount,
     });
+
+    // Call backend API
+    try {
+      await fetch(`/api/teacher/submissions/${submissionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ score: numericScore, feedback }),
+      });
+      // Refresh counts
+      fetch("/api/teacher/nav-counts").then((r) => r.json()).then((res) => {
+        if (res.success && res.data) setNavCounts(res.data);
+      }).catch(() => {});
+    } catch (err) {
+      console.warn("Backend grade sync error:", err);
+    }
+
     return true;
   };
 
   // Actions: Course Management
-  const addCourse = (newCourse) => {
+  const addCourse = async (newCourse) => {
+    const tempId = `course-${Date.now()}`;
     const courseObj = {
-      id: `course-${Date.now()}`,
-      slug: newCourse.title.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      id: tempId,
+      slug: (newCourse.title || "untitled").toLowerCase().replace(/[^a-z0-9]+/g, "-"),
       title: newCourse.title,
       category: newCourse.category || "Meteorology",
       level: newCourse.level || "Intermediate",
-      status: "active",
+      status: newCourse.isPublished ? "active" : "draft",
+      isPublished: Boolean(newCourse.isPublished),
       enrolledCount: 0,
       completionRate: 0,
       totalModules: newCourse.modules?.length || 1,
@@ -178,22 +264,46 @@ export function TrainerProvider({ children }) {
           ],
         },
       ],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
+
+    // Optimistic update
     const updated = [courseObj, ...courses];
     saveCourses(updated);
     saveTrainer({
       ...trainer,
       activeCoursesCount: updated.filter((c) => c.status === "active").length,
     });
+
+    // Call backend API
+    try {
+      const res = await fetch("/api/teacher/courses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newCourse),
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        const synced = updated.map((c) => (c.id === tempId ? data.data : c));
+        saveCourses(synced);
+      }
+    } catch (err) {
+      console.warn("Backend course creation sync warning:", err);
+    }
+
     return courseObj;
   };
 
-  const toggleCourseStatus = (courseId) => {
+  const toggleCourseStatus = async (courseId) => {
+    // Optimistic toggle
     const updated = courses.map((c) => {
       if (c.id === courseId) {
+        const nextStatus = c.status === "active" ? "draft" : "active";
         return {
           ...c,
-          status: c.status === "active" ? "draft" : "active",
+          status: nextStatus,
+          isPublished: nextStatus === "active",
         };
       }
       return c;
@@ -203,10 +313,19 @@ export function TrainerProvider({ children }) {
       ...trainer,
       activeCoursesCount: updated.filter((c) => c.status === "active").length,
     });
+
+    // Call backend API
+    try {
+      await fetch(`/api/teacher/courses/${courseId}/publish`, {
+        method: "POST",
+      });
+    } catch (err) {
+      console.warn("Backend course toggle warning:", err);
+    }
   };
 
   // Actions: Assignment Creation
-  const createAssignment = (data) => {
+  const createAssignment = async (data) => {
     const newAsg = {
       id: `asg-trainer-${Date.now()}`,
       title: data.title,
@@ -226,13 +345,25 @@ export function TrainerProvider({ children }) {
       ],
       description: data.description || "Complete the assigned meteorological analysis following IMD protocols.",
     };
+
     const updated = [newAsg, ...assignments];
     saveAssignments(updated);
+
+    try {
+      await fetch("/api/teacher/assignments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    } catch (err) {
+      console.warn("Backend assignment sync warning:", err);
+    }
+
     return newAsg;
   };
 
   // Actions: Live Classes
-  const scheduleLiveClass = (data) => {
+  const scheduleLiveClass = async (data) => {
     const d = new Date(data.date || "2026-03-15");
     const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
     const newLive = {
@@ -253,8 +384,20 @@ export function TrainerProvider({ children }) {
       agenda: data.agenda || ["Introduction and theoretical framing", "Interactive radar/satellite live walk-through", "Q&A and student assessments"],
       materials: ["masterclass_handout.pdf"],
     };
+
     const updated = [newLive, ...liveClasses];
     saveLiveClasses(updated);
+
+    try {
+      await fetch("/api/teacher/live-classes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    } catch (err) {
+      console.warn("Backend live-class sync warning:", err);
+    }
+
     return newLive;
   };
 
@@ -307,7 +450,7 @@ export function TrainerProvider({ children }) {
   };
 
   // Actions: Messages & Broadcasts
-  const sendReplyToConversation = (convId, text) => {
+  const sendReplyToConversation = async (convId, text) => {
     const now = new Date();
     const timeStr = now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
     const updated = conversations.map((c) => {
@@ -334,9 +477,19 @@ export function TrainerProvider({ children }) {
       return c;
     });
     saveConversations(updated);
+
+    try {
+      await fetch("/api/teacher/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversationId: convId, text }),
+      });
+    } catch (err) {
+      console.warn("Backend message sync warning:", err);
+    }
   };
 
-  const sendBroadcast = ({ title, targetBatch, message }) => {
+  const sendBroadcast = async ({ title, targetBatch, message }) => {
     const now = new Date();
     const dateStr = now.toISOString().replace("T", " ").slice(0, 16) + " IST";
     const newBcast = {
@@ -349,6 +502,17 @@ export function TrainerProvider({ children }) {
     };
     const updated = [newBcast, ...broadcasts];
     saveBroadcasts(updated);
+
+    try {
+      await fetch("/api/teacher/announcements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, targetBatch, message }),
+      });
+    } catch (err) {
+      console.warn("Backend announcement sync warning:", err);
+    }
+
     return newBcast;
   };
 
@@ -368,8 +532,11 @@ export function TrainerProvider({ children }) {
     certificates,
     conversations,
     broadcasts,
+    navCounts,
+    isSyncing,
     activeModal,
     setActiveModal,
+    refreshBackendData,
     gradeSubmission,
     addCourse,
     toggleCourseStatus,

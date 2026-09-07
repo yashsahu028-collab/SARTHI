@@ -47,6 +47,9 @@ export default function TrainerCoursesPage() {
             className="db-btn-primary"
             onClick={() => setActiveModal({ type: "new_course", data: null })}
             style={{
+              background: "linear-gradient(135deg, #059669 0%, #10b981 100%)",
+              color: "#ffffff",
+              border: "none",
               display: "inline-flex",
               alignItems: "center",
               gap: "8px",

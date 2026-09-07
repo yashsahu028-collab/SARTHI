@@ -7,631 +7,511 @@ export default function TrainerModals() {
   const {
     activeModal,
     setActiveModal,
-    courses,
-    trainees,
-    gradeSubmission,
     addCourse,
-    createAssignment,
     scheduleLiveClass,
+    gradeSubmission,
     sendBroadcast,
-    approveCertificate,
+    courses,
   } = useTrainer();
 
   if (!activeModal) return null;
 
   const closeModal = () => setActiveModal(null);
 
-  switch (activeModal.type) {
-    case "grading":
-      return <GradingModal submission={activeModal.data} onClose={closeModal} onGrade={gradeSubmission} />;
-    case "new_course":
-      return <NewCourseModal onClose={closeModal} onAdd={addCourse} />;
-    case "new_assignment":
-      return <NewAssignmentModal courses={courses} onClose={closeModal} onAdd={createAssignment} />;
-    case "schedule_live":
-      return <ScheduleLiveModal courses={courses} onClose={closeModal} onSchedule={scheduleLiveClass} />;
-    case "broadcast":
-      return <BroadcastModal onClose={closeModal} onBroadcast={sendBroadcast} />;
-    case "certificate_preview":
-      return <CertificatePreviewModal cert={activeModal.data} onClose={closeModal} onApprove={approveCertificate} />;
-    case "trainee_dossier":
-      return <TraineeDossierModal trainee={activeModal.data} onClose={closeModal} />;
-    default:
-      return null;
-  }
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(15, 23, 42, 0.45)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 9999,
+        padding: "20px",
+        animation: "fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) closeModal();
+      }}
+    >
+      <div
+        style={{
+          background: "#ffffff",
+          borderRadius: "24px",
+          width: "100%",
+          maxWidth: activeModal.type === "new_course" ? "560px" : "500px",
+          boxShadow: "0 25px 60px -15px rgba(0, 0, 0, 0.2), 0 0 1px 1px rgba(0, 0, 0, 0.05)",
+          border: "1px solid rgba(226, 232, 240, 0.8)",
+          overflow: "hidden",
+          animation: "scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
+        }}
+      >
+        {activeModal.type === "new_course" && (
+          <NewCourseModal closeModal={closeModal} addCourse={addCourse} />
+        )}
+        {activeModal.type === "schedule_live" && (
+          <ScheduleLiveModal closeModal={closeModal} scheduleLiveClass={scheduleLiveClass} courses={courses} />
+        )}
+        {activeModal.type === "grade_submission" && (
+          <GradeSubmissionModal closeModal={closeModal} gradeSubmission={gradeSubmission} data={activeModal.data} />
+        )}
+        {activeModal.type === "broadcast" && (
+          <BroadcastModal closeModal={closeModal} sendBroadcast={sendBroadcast} />
+        )}
+      </div>
+
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes scaleUp {
+          from { transform: scale(0.96); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
+    </div>
+  );
 }
 
-// 1. GRADING MODAL
-function GradingModal({ submission, onClose, onGrade }) {
-  const [score, setScore] = useState(submission.score || 95);
-  const [feedback, setFeedback] = useState(submission.feedback || "Good analytical approach to the INSAT-3DR radiance data. The calibration curve and split-window calculations match standard IMD verification benchmarks.");
+// 1. New Course Modal
+function NewCourseModal({ closeModal, addCourse }) {
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("Satellite Meteorology");
+  const [level, setLevel] = useState("Intermediate");
+  const [durationHours, setDurationHours] = useState(16);
+  const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e, publish = false) => {
     e.preventDefault();
+    if (!title.trim()) return;
+
     setIsSubmitting(true);
-    onGrade(submission.id, { score: Number(score), feedback });
-    setTimeout(() => {
-      setIsSubmitting(false);
-      onClose();
-    }, 400);
-  };
-
-  return (
-    <div className="trainer-modal-overlay" onClick={onClose}>
-      <div className="trainer-modal-card" onClick={(e) => e.stopPropagation()}>
-        <div className="trainer-modal-header">
-          <div>
-            <h3 className="trainer-modal-title">Evaluate & Grade Submission</h3>
-            <div style={{ fontSize: "12px", color: "var(--tr-text-muted)", marginTop: "2px" }}>
-              {submission.assignmentTitle}
-            </div>
-          </div>
-          <button className="trainer-modal-close" onClick={onClose}>&times;</button>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          <div className="trainer-modal-body">
-            {/* Trainee Card */}
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", background: "var(--tr-surface-alt)", padding: "12px 16px", borderRadius: "var(--tr-radius-md)" }}>
-              <img src={submission.studentAvatar || "/images/student-img-1.jpg"} alt={submission.studentName} style={{ width: "42px", height: "42px", borderRadius: "50%", objectFit: "cover" }} />
-              <div>
-                <div style={{ fontWeight: "700", color: "var(--tr-text-heading)", fontSize: "14px" }}>{submission.studentName}</div>
-                <div style={{ fontSize: "12px", color: "var(--tr-text-muted)" }}>{submission.division} &bull; {submission.studentEmail}</div>
-              </div>
-              <span className={`trainer-status-tag ${submission.status === "graded" ? "tag-graded" : "tag-pending"}`} style={{ marginLeft: "auto" }}>
-                {submission.status.toUpperCase()}
-              </span>
-            </div>
-
-            {/* Trainee Submitted Notes */}
-            <div className="trainer-form-group">
-              <label className="trainer-label">Trainee Submission Notes:</label>
-              <div style={{ padding: "10px 14px", background: "#ffffff", border: "1px solid var(--tr-border)", borderRadius: "var(--tr-radius-md)", fontSize: "13px", color: "#475569" }}>
-                {submission.studentNotes || "No notes provided by trainee."}
-              </div>
-            </div>
-
-            {/* Attached Submission Files */}
-            <div className="trainer-form-group">
-              <label className="trainer-label">Attached Submission Files ({submission.files?.length || 0}):</label>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                {submission.files?.map((file, idx) => (
-                  <div key={idx} style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "var(--tr-surface-alt)", border: "1px solid var(--tr-border)", padding: "6px 12px", borderRadius: "8px", fontSize: "12px", fontWeight: "600", color: "var(--tr-primary)" }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                    <span>{file}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Score Input */}
-            <div className="trainer-form-group">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <label className="trainer-label">Score / Marks (out of {submission.maxScore || 100}):</label>
-                <span style={{ fontSize: "16px", fontWeight: "800", color: score >= 80 ? "#059669" : "#d97706" }}>{score} / 100</span>
-              </div>
-              <input
-                type="number"
-                min="0"
-                max="100"
-                value={score}
-                onChange={(e) => setScore(e.target.value)}
-                required
-                className="trainer-input"
-              />
-            </div>
-
-            {/* Faculty Feedback Notes */}
-            <div className="trainer-form-group">
-              <label className="trainer-label">Faculty Feedback & Mentorship Remarks:</label>
-              <textarea
-                rows={4}
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                placeholder="Write specific feedback on data interpretation, methodology, or formatting..."
-                className="trainer-textarea"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="trainer-modal-footer">
-            <button type="button" className="trainer-quick-btn trainer-btn-outline" onClick={onClose}>Cancel</button>
-            <button type="submit" className="trainer-quick-btn trainer-btn-green" disabled={isSubmitting}>
-              {isSubmitting ? "Publishing Grade..." : "Publish Score & Feedback"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-// 2. NEW COURSE MODAL
-function NewCourseModal({ onClose, onAdd }) {
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("Satellite Remote Sensing");
-  const [level, setLevel] = useState("Intermediate");
-  const [durationHours, setDurationHours] = useState(20);
-  const [description, setDescription] = useState("");
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onAdd({
-      title,
+    await addCourse({
+      title: title.trim(),
       category,
       level,
-      durationHours: Number(durationHours),
-      description,
+      durationHours: Number(durationHours) || 16,
+      description: description.trim() || "Comprehensive syllabus for IMD probationary officers and meteorological specialists.",
+      isPublished: publish,
     });
-    onClose();
+    setIsSubmitting(false);
+    closeModal();
   };
 
   return (
-    <div className="trainer-modal-overlay" onClick={onClose}>
-      <div className="trainer-modal-card" onClick={(e) => e.stopPropagation()}>
-        <div className="trainer-modal-header">
-          <h3 className="trainer-modal-title">Create New IMD Training Course</h3>
-          <button className="trainer-modal-close" onClick={onClose}>&times;</button>
+    <div>
+      <div style={{ padding: "24px 28px 20px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <span style={{ fontSize: "11px", fontWeight: "700", color: "#059669", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            Faculty Curriculum Builder
+          </span>
+          <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#0f172a", margin: "4px 0 0" }}>
+            Create New Meteorological Course
+          </h3>
         </div>
-        <form onSubmit={handleSubmit}>
-          <div className="trainer-modal-body">
-            <div className="trainer-form-group">
-              <label className="trainer-label">Course Title:</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Dual-Polarization Doppler Radar Nowcasting"
-                required
-                className="trainer-input"
-              />
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-              <div className="trainer-form-group">
-                <label className="trainer-label">Category / Domain:</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)} className="trainer-select">
-                  <option value="Satellite Remote Sensing">Satellite Remote Sensing</option>
-                  <option value="Radar Meteorology">Radar Meteorology</option>
-                  <option value="Numerical Weather Prediction">Numerical Weather Prediction</option>
-                  <option value="Monsoon & Synoptics">Monsoon & Synoptics</option>
-                  <option value="Agrometeorology & Climate">Agrometeorology & Climate</option>
-                  <option value="Aviation & Cyclone Warning">Aviation & Cyclone Warning</option>
-                </select>
-              </div>
-
-              <div className="trainer-form-group">
-                <label className="trainer-label">Proficiency Level:</label>
-                <select value={level} onChange={(e) => setLevel(e.target.value)} className="trainer-select">
-                  <option value="Basic / Induction">Basic / Induction</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced Specialized">Advanced Specialized</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="trainer-form-group">
-              <label className="trainer-label">Estimated Training Hours:</label>
-              <input
-                type="number"
-                min="5"
-                max="100"
-                value={durationHours}
-                onChange={(e) => setDurationHours(e.target.value)}
-                className="trainer-input"
-              />
-            </div>
-
-            <div className="trainer-form-group">
-              <label className="trainer-label">Course Syllabus Summary & Objectives:</label>
-              <textarea
-                rows={3}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Detail the scientific topics, software tools (e.g. Python, WRF, GrADS), and target outcomes..."
-                required
-                className="trainer-textarea"
-              />
-            </div>
-          </div>
-          <div className="trainer-modal-footer">
-            <button type="button" className="trainer-quick-btn trainer-btn-outline" onClick={onClose}>Cancel</button>
-            <button type="submit" className="trainer-quick-btn trainer-btn-green">Publish Course</button>
-          </div>
-        </form>
+        <button
+          onClick={closeModal}
+          style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}
+        >
+          &times;
+        </button>
       </div>
+
+      <form onSubmit={(e) => handleSubmit(e, true)} style={{ padding: "24px 28px" }}>
+        <div style={{ marginBottom: "16px" }}>
+          <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+            Course Title *
+          </label>
+          <input
+            type="text"
+            required
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g., Radar Doppler Velocity & Mesoscale Convective Systems"
+            style={{ width: "100%", padding: "10px 14px", borderRadius: "12px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none" }}
+          />
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+          <div>
+            <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+              Discipline / Category
+            </label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              style={{ width: "100%", padding: "10px 14px", borderRadius: "12px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none", background: "#fff" }}
+            >
+              <option value="Satellite Meteorology">Satellite Meteorology</option>
+              <option value="Radar Meteorology">Radar Meteorology</option>
+              <option value="NWP Modeling">NWP Modeling</option>
+              <option value="Severe Weather">Severe Weather & Cyclones</option>
+              <option value="Aviation Meteorology">Aviation Meteorology</option>
+              <option value="Climatology">Climatology & Climate Trends</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+              Proficiency Level
+            </label>
+            <select
+              value={level}
+              onChange={(e) => setLevel(e.target.value)}
+              style={{ width: "100%", padding: "10px 14px", borderRadius: "12px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none", background: "#fff" }}
+            >
+              <option value="Beginner">Beginner (Cadet / Officer Induction)</option>
+              <option value="Intermediate">Intermediate (Operational Meteorologist)</option>
+              <option value="Advanced">Advanced (Senior Scientist / Specialist)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: "16px" }}>
+          <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+            Course Description & Training Scope
+          </label>
+          <textarea
+            rows="3"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Outline syllabus modules, lab datasets (NetCDF/GRIB2), and IMD operational benchmarks..."
+            style={{ width: "100%", padding: "10px 14px", borderRadius: "12px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none", resize: "none" }}
+          ></textarea>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "24px" }}>
+          <button
+            type="button"
+            onClick={(e) => handleSubmit(e, false)}
+            disabled={isSubmitting || !title.trim()}
+            style={{ padding: "10px 18px", borderRadius: "12px", border: "1px solid #cbd5e1", background: "#f8fafc", color: "#475569", fontSize: "13.5px", fontWeight: "600", cursor: "pointer" }}
+          >
+            Save as Draft
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting || !title.trim()}
+            style={{ padding: "10px 22px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg, #059669 0%, #10b981 100%)", color: "#ffffff", fontSize: "13.5px", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 14px rgba(16, 185, 129, 0.25)" }}
+          >
+            {isSubmitting ? "Creating..." : "Publish Course →"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
 
-// 3. NEW ASSIGNMENT MODAL
-function NewAssignmentModal({ courses, onClose, onAdd }) {
+// 2. Schedule Live Class Modal
+function ScheduleLiveModal({ closeModal, scheduleLiveClass, courses }) {
   const [title, setTitle] = useState("");
-  const [courseId, setCourseId] = useState(courses[0]?.id || "satellite-meteorology");
-  const [dueDate, setDueDate] = useState("2026-03-25");
-  const [maxMarks, setMaxMarks] = useState(100);
-  const [weightage, setWeightage] = useState("15% of Final Grade");
-  const [description, setDescription] = useState("");
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onAdd({
-      title,
-      courseId,
-      dueDate,
-      maxMarks: Number(maxMarks),
-      weightage,
-      description,
-    });
-    onClose();
-  };
-
-  return (
-    <div className="trainer-modal-overlay" onClick={onClose}>
-      <div className="trainer-modal-card" onClick={(e) => e.stopPropagation()}>
-        <div className="trainer-modal-header">
-          <h3 className="trainer-modal-title">Publish New Assignment</h3>
-          <button className="trainer-modal-close" onClick={onClose}>&times;</button>
-        </div>
-        <form onSubmit={handleSubmit}>
-          <div className="trainer-modal-body">
-            <div className="trainer-form-group">
-              <label className="trainer-label">Assignment Title:</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. WRF Simulation of Cyclone Biparjoy"
-                required
-                className="trainer-input"
-              />
-            </div>
-
-            <div className="trainer-form-group">
-              <label className="trainer-label">Select Course:</label>
-              <select value={courseId} onChange={(e) => setCourseId(e.target.value)} className="trainer-select">
-                {courses.map((c) => (
-                  <option key={c.id} value={c.id}>{c.title}</option>
-                ))}
-              </select>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-              <div className="trainer-form-group">
-                <label className="trainer-label">Submission Due Date:</label>
-                <input
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  required
-                  className="trainer-input"
-                />
-              </div>
-
-              <div className="trainer-form-group">
-                <label className="trainer-label">Max Marks:</label>
-                <input
-                  type="number"
-                  value={maxMarks}
-                  onChange={(e) => setMaxMarks(e.target.value)}
-                  className="trainer-input"
-                />
-              </div>
-            </div>
-
-            <div className="trainer-form-group">
-              <label className="trainer-label">Weightage:</label>
-              <input
-                type="text"
-                value={weightage}
-                onChange={(e) => setWeightage(e.target.value)}
-                placeholder="e.g. 20% of Final Grade"
-                className="trainer-input"
-              />
-            </div>
-
-            <div className="trainer-form-group">
-              <label className="trainer-label">Instructions & Attached Dataset Specifications:</label>
-              <textarea
-                rows={3}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Specify NetCDF file links, coordinate boundaries, required scripts, and reporting format..."
-                required
-                className="trainer-textarea"
-              />
-            </div>
-          </div>
-          <div className="trainer-modal-footer">
-            <button type="button" className="trainer-quick-btn trainer-btn-outline" onClick={onClose}>Cancel</button>
-            <button type="submit" className="trainer-quick-btn trainer-btn-green">Publish Assignment</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-// 4. SCHEDULE LIVE MODAL
-function ScheduleLiveModal({ courses, onClose, onSchedule }) {
-  const [title, setTitle] = useState("");
-  const [courseId, setCourseId] = useState(courses[0]?.id || "satellite-meteorology");
-  const [batch, setBatch] = useState("All IMD Meteorologist Batches (2025-26)");
-  const [date, setDate] = useState("2026-03-15");
+  const [courseId, setCourseId] = useState(courses[0]?.id || "");
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [time, setTime] = useState("10:00 AM - 11:30 AM IST");
+  const [batch, setBatch] = useState("All IMD Probationary Batches");
+  const [agenda, setAgenda] = useState("Interactive Radar Data Analysis & Doppler Velocity Profiles");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSchedule({
-      title,
+    if (!title.trim()) return;
+
+    await scheduleLiveClass({
+      title: title.trim(),
       courseId,
-      batch,
       date,
       time,
+      batch,
+      agenda: agenda.split("\n").filter(Boolean),
     });
-    onClose();
+    closeModal();
   };
 
   return (
-    <div className="trainer-modal-overlay" onClick={onClose}>
-      <div className="trainer-modal-card" onClick={(e) => e.stopPropagation()}>
-        <div className="trainer-modal-header">
-          <h3 className="trainer-modal-title">Schedule Live Masterclass</h3>
-          <button className="trainer-modal-close" onClick={onClose}>&times;</button>
+    <div>
+      <div style={{ padding: "24px 28px 20px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <span style={{ fontSize: "11px", fontWeight: "700", color: "#059669", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            Live Studio Command
+          </span>
+          <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#0f172a", margin: "4px 0 0" }}>
+            Schedule Live Masterclass
+          </h3>
         </div>
-        <form onSubmit={handleSubmit}>
-          <div className="trainer-modal-body">
-            <div className="trainer-form-group">
-              <label className="trainer-label">Live Session Topic:</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Real-Time Doppler Radar Nowcast Lab"
-                required
-                className="trainer-input"
-              />
-            </div>
-
-            <div className="trainer-form-group">
-              <label className="trainer-label">Course Association:</label>
-              <select value={courseId} onChange={(e) => setCourseId(e.target.value)} className="trainer-select">
-                {courses.map((c) => (
-                  <option key={c.id} value={c.id}>{c.title}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="trainer-form-group">
-              <label className="trainer-label">Target Trainee Batch:</label>
-              <input
-                type="text"
-                value={batch}
-                onChange={(e) => setBatch(e.target.value)}
-                className="trainer-input"
-              />
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-              <div className="trainer-form-group">
-                <label className="trainer-label">Date:</label>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  required
-                  className="trainer-input"
-                />
-              </div>
-
-              <div className="trainer-form-group">
-                <label className="trainer-label">Time & Timezone:</label>
-                <input
-                  type="text"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  placeholder="e.g. 10:00 AM - 11:30 AM IST"
-                  required
-                  className="trainer-input"
-                />
-              </div>
-            </div>
-          </div>
-          <div className="trainer-modal-footer">
-            <button type="button" className="trainer-quick-btn trainer-btn-outline" onClick={onClose}>Cancel</button>
-            <button type="submit" className="trainer-quick-btn trainer-btn-green">Schedule Masterclass</button>
-          </div>
-        </form>
+        <button
+          onClick={closeModal}
+          style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}
+        >
+          &times;
+        </button>
       </div>
+
+      <form onSubmit={handleSubmit} style={{ padding: "24px 28px" }}>
+        <div style={{ marginBottom: "16px" }}>
+          <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+            Masterclass Topic *
+          </label>
+          <input
+            type="text"
+            required
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g., INSAT-3DR Rapid Scanning & Cyclone Eye Wall Detection"
+            style={{ width: "100%", padding: "10px 14px", borderRadius: "12px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none" }}
+          />
+        </div>
+
+        <div style={{ marginBottom: "16px" }}>
+          <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+            Associated Course
+          </label>
+          <select
+            value={courseId}
+            onChange={(e) => setCourseId(e.target.value)}
+            style={{ width: "100%", padding: "10px 14px", borderRadius: "12px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none", background: "#fff" }}
+          >
+            {courses.map((c) => (
+              <option key={c.id} value={c.id}>{c.title}</option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+          <div>
+            <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+              Date
+            </label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              style={{ width: "100%", padding: "10px 14px", borderRadius: "12px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none" }}
+            />
+          </div>
+          <div>
+            <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+              Time Slot
+            </label>
+            <input
+              type="text"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              placeholder="10:00 AM - 11:30 AM IST"
+              style={{ width: "100%", padding: "10px 14px", borderRadius: "12px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none" }}
+            />
+          </div>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "24px" }}>
+          <button
+            type="button"
+            onClick={closeModal}
+            style={{ padding: "10px 18px", borderRadius: "12px", border: "1px solid #cbd5e1", background: "#f8fafc", color: "#475569", fontSize: "13.5px", fontWeight: "600", cursor: "pointer" }}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            style={{ padding: "10px 22px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg, #059669 0%, #10b981 100%)", color: "#ffffff", fontSize: "13.5px", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 14px rgba(16, 185, 129, 0.25)" }}
+          >
+            Schedule Live Masterclass →
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
 
-// 5. BROADCAST MODAL
-function BroadcastModal({ onClose, onBroadcast }) {
+// 3. Grade Submission Modal
+function GradeSubmissionModal({ closeModal, gradeSubmission, data }) {
+  const [score, setScore] = useState(data?.score || 90);
+  const [feedback, setFeedback] = useState(data?.feedback || "");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!data?.id) return;
+    await gradeSubmission(data.id, {
+      score: Number(score),
+      feedback: feedback || "Verified according to IMD meteorological guidelines.",
+    });
+    closeModal();
+  };
+
+  return (
+    <div>
+      <div style={{ padding: "24px 28px 20px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <span style={{ fontSize: "11px", fontWeight: "700", color: "#059669", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            Faculty Evaluation Desk
+          </span>
+          <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#0f172a", margin: "4px 0 0" }}>
+            Evaluate Trainee Submission
+          </h3>
+        </div>
+        <button
+          onClick={closeModal}
+          style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}
+        >
+          &times;
+        </button>
+      </div>
+
+      <div style={{ padding: "20px 28px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+        <div style={{ fontSize: "14px", fontWeight: "700", color: "#0f172a" }}>{data?.studentName}</div>
+        <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>{data?.assignmentTitle}</div>
+        {data?.studentNotes && (
+          <div style={{ marginTop: "10px", padding: "10px 12px", background: "#fff", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "12.5px", color: "#334155", fontStyle: "italic" }}>
+            &ldquo;{data.studentNotes}&rdquo;
+          </div>
+        )}
+      </div>
+
+      <form onSubmit={handleSubmit} style={{ padding: "24px 28px" }}>
+        <div style={{ marginBottom: "16px" }}>
+          <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+            Awarded Score (0 - {data?.maxScore || 100})
+          </label>
+          <input
+            type="number"
+            min="0"
+            max={data?.maxScore || 100}
+            required
+            value={score}
+            onChange={(e) => setScore(e.target.value)}
+            style={{ width: "120px", padding: "10px 14px", borderRadius: "12px", border: "1px solid #cbd5e1", fontSize: "18px", fontWeight: "700", outline: "none", color: "#059669" }}
+          />
+        </div>
+
+        <div style={{ marginBottom: "16px" }}>
+          <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+            Instructor Feedback & Evaluative Notes
+          </label>
+          <textarea
+            rows="3"
+            value={feedback}
+            onChange={(e) => setFeedback(e.target.value)}
+            placeholder="Detail scientific accuracy, data visualization quality, and specific meteorological corrections..."
+            style={{ width: "100%", padding: "10px 14px", borderRadius: "12px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none", resize: "none" }}
+          ></textarea>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "24px" }}>
+          <button
+            type="button"
+            onClick={closeModal}
+            style={{ padding: "10px 18px", borderRadius: "12px", border: "1px solid #cbd5e1", background: "#f8fafc", color: "#475569", fontSize: "13.5px", fontWeight: "600", cursor: "pointer" }}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            style={{ padding: "10px 22px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg, #059669 0%, #10b981 100%)", color: "#ffffff", fontSize: "13.5px", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 14px rgba(16, 185, 129, 0.25)" }}
+          >
+            Submit Grade & Notify Trainee →
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+// 4. Broadcast Modal
+function BroadcastModal({ closeModal, sendBroadcast }) {
   const [title, setTitle] = useState("");
-  const [targetBatch, setTargetBatch] = useState("All Trainee Batches");
+  const [targetBatch, setTargetBatch] = useState("All Active Trainees");
   const [message, setMessage] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onBroadcast({ title, targetBatch, message });
-    onClose();
+    if (!title.trim() || !message.trim()) return;
+    await sendBroadcast({ title, targetBatch, message });
+    closeModal();
   };
 
   return (
-    <div className="trainer-modal-overlay" onClick={onClose}>
-      <div className="trainer-modal-card" onClick={(e) => e.stopPropagation()}>
-        <div className="trainer-modal-header">
-          <h3 className="trainer-modal-title">Broadcast Announcement to Trainees</h3>
-          <button className="trainer-modal-close" onClick={onClose}>&times;</button>
+    <div>
+      <div style={{ padding: "24px 28px 20px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <span style={{ fontSize: "11px", fontWeight: "700", color: "#059669", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            IMD Broadcast System
+          </span>
+          <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#0f172a", margin: "4px 0 0" }}>
+            Send Batch Announcement
+          </h3>
         </div>
-        <form onSubmit={handleSubmit}>
-          <div className="trainer-modal-body">
-            <div className="trainer-form-group">
-              <label className="trainer-label">Announcement Title / Subject:</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. HPC Maintenance Window & Lab Reschedule"
-                required
-                className="trainer-input"
-              />
-            </div>
-
-            <div className="trainer-form-group">
-              <label className="trainer-label">Target Audience / Batch:</label>
-              <select value={targetBatch} onChange={(e) => setTargetBatch(e.target.value)} className="trainer-select">
-                <option value="All Trainee Batches">All Trainee Batches (186 Trainees)</option>
-                <option value="Satellite Meteorology Batch">Satellite Meteorology Batch (68 Trainees)</option>
-                <option value="NWP & Modeling Batch">NWP & Modeling Batch (52 Trainees)</option>
-                <option value="Radar Operations Batch">Radar Operations Batch (42 Trainees)</option>
-              </select>
-            </div>
-
-            <div className="trainer-form-group">
-              <label className="trainer-label">Broadcast Message Content:</label>
-              <textarea
-                rows={4}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Write your notice clearly. Trainees will receive an instant dashboard banner and email notification..."
-                required
-                className="trainer-textarea"
-              />
-            </div>
-          </div>
-          <div className="trainer-modal-footer">
-            <button type="button" className="trainer-quick-btn trainer-btn-outline" onClick={onClose}>Cancel</button>
-            <button type="submit" className="trainer-quick-btn trainer-btn-green">Dispatch Broadcast</button>
-          </div>
-        </form>
+        <button
+          onClick={closeModal}
+          style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "50%", width: "32px", height: "32px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}
+        >
+          &times;
+        </button>
       </div>
-    </div>
-  );
-}
 
-// 6. CERTIFICATE PREVIEW MODAL
-function CertificatePreviewModal({ cert, onClose, onApprove }) {
-  return (
-    <div className="trainer-modal-overlay" onClick={onClose}>
-      <div className="trainer-modal-card" style={{ maxWidth: "760px" }} onClick={(e) => e.stopPropagation()}>
-        <div className="trainer-modal-header">
-          <h3 className="trainer-modal-title">Official IMD Certificate Endorsement</h3>
-          <button className="trainer-modal-close" onClick={onClose}>&times;</button>
+      <form onSubmit={handleSubmit} style={{ padding: "24px 28px" }}>
+        <div style={{ marginBottom: "16px" }}>
+          <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+            Announcement Subject *
+          </label>
+          <input
+            type="text"
+            required
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g., Mandatory WRF Simulation Lab Deadline Extension"
+            style={{ width: "100%", padding: "10px 14px", borderRadius: "12px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none" }}
+          />
         </div>
-        <div className="trainer-modal-body" style={{ background: "#f8faf9" }}>
-          <div className="trainer-cert-paper">
-            <img src="/images/sarthi-logo.png" alt="IMD Emblem" className="trainer-cert-emblem" />
-            <div className="trainer-cert-title">India Meteorological Department</div>
-            <div className="trainer-cert-sub">Ministry of Earth Sciences &bull; Government of India</div>
 
-            <p style={{ fontStyle: "italic", color: "#64748b", margin: "14px 0 6px 0", fontSize: "14px" }}>
-              This is to officially certify that
-            </p>
-
-            <div className="trainer-cert-name">{cert.studentName}</div>
-
-            <p style={{ fontSize: "14px", color: "#334155", maxWidth: "560px", margin: "10px auto", lineHeight: 1.6 }}>
-              has successfully completed all rigorous theoretical modules, numerical laboratory experiments, and qualifying assessments for
-            </p>
-
-            <h4 style={{ fontSize: "18px", color: "#024a3a", fontWeight: "800", margin: "12px 0" }}>
-              {cert.courseTitle}
-            </h4>
-
-            <div style={{ fontSize: "13px", fontWeight: "700", color: "#059669", marginBottom: "16px" }}>
-              Attained Grade: {cert.finalGrade || "96% (Grade A+)"} &bull; Certificate No: {cert.certificateNumber}
-            </div>
-
-            <div className="trainer-cert-signatures">
-              <div style={{ textAlign: "left" }}>
-                <div style={{ fontWeight: "700", color: "#024a3a", fontSize: "13px" }}>Dr. R. K. Sharma</div>
-                <div style={{ fontSize: "11px", color: "#64748b" }}>Scientist-F & Chief Instructor, IMD</div>
-              </div>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ width: "48px", height: "48px", borderRadius: "50%", border: "2px solid #024a3a", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: "800", color: "#024a3a" }}>
-                  IMD SEAL
-                </div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontWeight: "700", color: "#024a3a", fontSize: "13px" }}>Dr. Mrutyunjay Mohapatra</div>
-                <div style={{ fontSize: "11px", color: "#64748b" }}>Director General of Meteorology (DGM)</div>
-              </div>
-            </div>
-          </div>
+        <div style={{ marginBottom: "16px" }}>
+          <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+            Broadcast Target Group
+          </label>
+          <select
+            value={targetBatch}
+            onChange={(e) => setTargetBatch(e.target.value)}
+            style={{ width: "100%", padding: "10px 14px", borderRadius: "12px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none", background: "#fff" }}
+          >
+            <option value="All Active Trainees">All Active Trainees (186 Officers)</option>
+            <option value="Probationary Batch 2026-A">Probationary Batch 2026-A</option>
+            <option value="Radar Specialists (DWR Division)">Radar Specialists (DWR Division)</option>
+            <option value="Satellite Meteorology Cadets">Satellite Meteorology Cadets</option>
+          </select>
         </div>
-        <div className="trainer-modal-footer">
-          <button type="button" className="trainer-quick-btn trainer-btn-outline" onClick={onClose}>Close Preview</button>
-          {cert.status === "pending_approval" && (
-            <button
-              type="button"
-              className="trainer-quick-btn trainer-btn-green"
-              onClick={() => {
-                onApprove(cert.id);
-                onClose();
-              }}
-            >
-              Sign & Endorse Certificate
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
 
-// 7. TRAINEE DOSSIER MODAL
-function TraineeDossierModal({ trainee, onClose }) {
-  return (
-    <div className="trainer-modal-overlay" onClick={onClose}>
-      <div className="trainer-modal-card" onClick={(e) => e.stopPropagation()}>
-        <div className="trainer-modal-header">
-          <h3 className="trainer-modal-title">Trainee Academic Dossier</h3>
-          <button className="trainer-modal-close" onClick={onClose}>&times;</button>
+        <div style={{ marginBottom: "16px" }}>
+          <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+            Message Content *
+          </label>
+          <textarea
+            rows="4"
+            required
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Write official message for trainees..."
+            style={{ width: "100%", padding: "10px 14px", borderRadius: "12px", border: "1px solid #cbd5e1", fontSize: "14px", outline: "none", resize: "none" }}
+          ></textarea>
         </div>
-        <div className="trainer-modal-body">
-          <div style={{ display: "flex", alignItems: "center", gap: "16px", padding: "16px", background: "var(--tr-surface-alt)", borderRadius: "var(--tr-radius-md)" }}>
-            <img src={trainee.avatar || "/images/student-img-1.jpg"} alt={trainee.name} style={{ width: "64px", height: "64px", borderRadius: "50%", objectFit: "cover", border: "2px solid var(--tr-accent-teal)" }} />
-            <div>
-              <h4 style={{ margin: 0, fontSize: "18px", color: "var(--tr-text-heading)", fontWeight: "800" }}>{trainee.name}</h4>
-              <div style={{ fontSize: "13px", color: "var(--tr-text-muted)", marginTop: "2px" }}>{trainee.division}</div>
-              <div style={{ fontSize: "12px", color: "var(--tr-text-light)", marginTop: "2px" }}>{trainee.email} &bull; {trainee.batch}</div>
-            </div>
-            <span className="trainer-status-tag tag-graded" style={{ marginLeft: "auto" }}>
-              {trainee.performanceTier}
-            </span>
-          </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
-            <div style={{ padding: "12px", background: "#ffffff", border: "1px solid var(--tr-border)", borderRadius: "var(--tr-radius-md)", textAlign: "center" }}>
-              <div style={{ fontSize: "20px", fontWeight: "800", color: "#059669" }}>{trainee.attendanceRate}%</div>
-              <div style={{ fontSize: "11.5px", color: "var(--tr-text-muted)" }}>Live Attendance</div>
-            </div>
-            <div style={{ padding: "12px", background: "#ffffff", border: "1px solid var(--tr-border)", borderRadius: "var(--tr-radius-md)", textAlign: "center" }}>
-              <div style={{ fontSize: "20px", fontWeight: "800", color: "#0d9488" }}>{trainee.quizAvgScore}%</div>
-              <div style={{ fontSize: "11.5px", color: "var(--tr-text-muted)" }}>Quiz Average</div>
-            </div>
-            <div style={{ padding: "12px", background: "#ffffff", border: "1px solid var(--tr-border)", borderRadius: "var(--tr-radius-md)", textAlign: "center" }}>
-              <div style={{ fontSize: "20px", fontWeight: "800", color: "#4f46e5" }}>{trainee.assignmentsSubmitted}</div>
-              <div style={{ fontSize: "11.5px", color: "var(--tr-text-muted)" }}>Submissions Done</div>
-            </div>
-          </div>
-
-          <div className="trainer-form-group">
-            <label className="trainer-label">Faculty Confidential Notes:</label>
-            <div style={{ padding: "12px", background: "var(--tr-surface-alt)", borderRadius: "var(--tr-radius-md)", fontSize: "13px", color: "#334155" }}>
-              {trainee.notes || "No special notes logged."}
-            </div>
-          </div>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "24px" }}>
+          <button
+            type="button"
+            onClick={closeModal}
+            style={{ padding: "10px 18px", borderRadius: "12px", border: "1px solid #cbd5e1", background: "#f8fafc", color: "#475569", fontSize: "13.5px", fontWeight: "600", cursor: "pointer" }}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            style={{ padding: "10px 22px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg, #059669 0%, #10b981 100%)", color: "#ffffff", fontSize: "13.5px", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 14px rgba(16, 185, 129, 0.25)" }}
+          >
+            Broadcast Announcement →
+          </button>
         </div>
-        <div className="trainer-modal-footer">
-          <button type="button" className="trainer-quick-btn trainer-btn-outline" onClick={onClose}>Close Dossier</button>
-        </div>
-      </div>
+      </form>
     </div>
   );
 }

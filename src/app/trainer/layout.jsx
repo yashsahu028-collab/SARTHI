@@ -1,4 +1,5 @@
 import { TrainerProvider } from "@/lib/services/TrainerContext";
+import TrainerModals from "@/components/trainer/TrainerModals";
 import "@/app/dashboard/dashboard.css";
 import "./trainer.css";
 
@@ -8,5 +9,10 @@ export const metadata = {
 };
 
 export default function TrainerLayout({ children }) {
-  return <TrainerProvider>{children}</TrainerProvider>;
+  return (
+    <TrainerProvider>
+      {children}
+      <TrainerModals />
+    </TrainerProvider>
+  );
 }
