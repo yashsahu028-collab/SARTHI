@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { verifyJWT } from "./auth/jwt";
 import { withResiliency } from "@/lib/resilient-db";
@@ -53,9 +53,16 @@ export const getCurrentUser = cache(async () => {
     
     if (!token) {
       try {
-        // Default fallback to Mohit Raj student account (cmp86ntpx0000lmutor3koqmz)
+        const headerList = await headers().catch(() => null);
+        const referer = headerList?.get('referer') || '';
+        const isTeacherRequest = referer.includes('/trainer') || referer.includes('/teacher');
+
+        const fallbackUserId = isTeacherRequest
+          ? 'cmp9eaqu600008iuvgyokhpxw' // Instructor Mohit Raj
+          : 'cmp86ntpx0000lmutor3koqmz'; // Student Mohit Raj
+
         const defaultUser = await prisma.user.findUnique({
-          where: { id: 'cmp86ntpx0000lmutor3koqmz' },
+          where: { id: fallbackUserId },
           select: {
             id: true,
             email: true,

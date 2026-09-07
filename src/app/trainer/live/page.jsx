@@ -402,12 +402,12 @@ export default function TrainerLiveStudioPage() {
                           fontWeight: "800",
                           padding: "3px 8px",
                           borderRadius: "999px",
-                          background: item.status === "completed" ? "#dcfce7" : "#ecfdf5",
-                          color: item.status === "completed" ? "#166534" : "#065f46",
-                          border: item.status === "completed" ? "1px solid #bbf7d0" : "1px solid #a7f3d0",
+                          background: (item.status || "").toLowerCase() === "completed" ? "#dcfce7" : "#ecfdf5",
+                          color: (item.status || "").toLowerCase() === "completed" ? "#166534" : "#065f46",
+                          border: (item.status || "").toLowerCase() === "completed" ? "1px solid #bbf7d0" : "1px solid #a7f3d0",
                         }}
                       >
-                        {item.status.toUpperCase()}
+                        {(item.status || "SCHEDULED").toUpperCase()}
                       </span>
                     </td>
                     <td style={{ padding: "14px", textAlign: "right" }}>

@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth';
+import { authenticateTeacher } from '@/lib/auth/middleware';
 
 function isAuditPlaceholder(value: string) {
   return value === 'sample-id' || value === 'sample-slug' || value.startsWith('sample-');
@@ -40,8 +40,8 @@ export async function GET(
   { params }: { params: Promise<{ courseId: string }> }
 ) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
+    const userId = await authenticateTeacher(req);
+    if (!userId) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
@@ -61,7 +61,7 @@ export async function GET(
       });
     }
 
-    const ownership = await ensureOwnership(courseId, user.id);
+    const ownership = await ensureOwnership(courseId, userId);
     if (!ownership.valid) {
       return NextResponse.json({ error: ownership.message }, { status: ownership.status });
     }
@@ -82,7 +82,6 @@ export async function GET(
             duration: true,
             isFreePreview: true,
             scheduledAt: true,
-            type: true,
             liveStatus: true,
             moduleId: true,
             assignments: {
@@ -129,13 +128,13 @@ export async function PATCH(
   { params }: { params: Promise<{ courseId: string }> }
 ) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
+    const userId = await authenticateTeacher(req);
+    if (!userId) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
     const { courseId } = await params;
-    const ownership = await ensureOwnership(courseId, user.id);
+    const ownership = await ensureOwnership(courseId, userId);
     if (!ownership.valid) {
       return NextResponse.json({ error: ownership.message }, { status: ownership.status });
     }
@@ -180,13 +179,13 @@ export async function DELETE(
   { params }: { params: Promise<{ courseId: string }> }
 ) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
+    const userId = await authenticateTeacher(req);
+    if (!userId) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
     const { courseId } = await params;
-    const ownership = await ensureOwnership(courseId, user.id);
+    const ownership = await ensureOwnership(courseId, userId);
     if (!ownership.valid) {
       return NextResponse.json({ error: ownership.message }, { status: ownership.status });
     }

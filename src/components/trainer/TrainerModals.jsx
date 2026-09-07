@@ -222,7 +222,7 @@ function ScheduleLiveModal({ closeModal, scheduleLiveClass, courses }) {
 
     await scheduleLiveClass({
       title: title.trim(),
-      courseId,
+      courseId: courseId || courses[0]?.id,
       date,
       time,
       batch,

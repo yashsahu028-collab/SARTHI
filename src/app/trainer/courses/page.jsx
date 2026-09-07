@@ -9,7 +9,39 @@ export default function TrainerCoursesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [isLoadingSyllabus, setIsLoadingSyllabus] = useState(false);
   const { courses, toggleCourseStatus, setActiveModal } = useTrainer();
+
+  const handleInspectSyllabus = async (course) => {
+    setSelectedCourse(course);
+    if (!course.modules || course.modules.length === 0) {
+      setIsLoadingSyllabus(true);
+      try {
+        const res = await fetch(`/api/teacher/courses/${course.id}`);
+        const data = await res.json();
+        if (data && (data.modules || data.lessons)) {
+          setSelectedCourse({
+            ...course,
+            ...data,
+            modules: (data.modules && data.modules.length > 0) ? data.modules.map((m) => ({
+              ...m,
+              lessons: data.lessons?.filter((l) => l.moduleId === m.id) || []
+            })) : [
+              {
+                id: `mod-core`,
+                title: "Core Curriculum & Practical Modules",
+                lessons: data.lessons || []
+              }
+            ]
+          });
+        }
+      } catch (err) {
+        console.warn("Error fetching syllabus:", err);
+      } finally {
+        setIsLoadingSyllabus(false);
+      }
+    }
+  };
 
   const categories = React.useMemo(() => {
     const list = Array.from(new Set(courses.map((c) => c.category).filter(Boolean)));
@@ -227,9 +259,9 @@ export default function TrainerCoursesPage() {
                     type="button"
                     className="trainer-quick-btn trainer-btn-outline"
                     style={{ flex: 1, justifyContent: "center", height: "36px", fontSize: "12.5px", fontWeight: "700", borderRadius: "8px" }}
-                    onClick={() => setSelectedCourse(course)}
+                    onClick={() => handleInspectSyllabus(course)}
                   >
-                    Inspect Syllabus ({course.modules?.length || 0})
+                    Inspect Syllabus
                   </button>
                   <button
                     type="button"

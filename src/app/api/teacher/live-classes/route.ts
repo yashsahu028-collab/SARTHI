@@ -1,24 +1,16 @@
-import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth/session';
+import { NextRequest, NextResponse } from 'next/server';
+import { authenticateTeacher } from '@/lib/auth/middleware';
 import { prisma } from '@/lib/prisma';
 
-/**
- * GET /api/teacher/live-classes
- *
- * Returns all LiveKit-enabled live classes created by the authenticated instructor,
- * ordered by most recently created.
- */
-export async function GET() {
+export const dynamic = 'force-dynamic';
+
+export async function GET(request: NextRequest) {
   try {
-    const session = await getSession();
-    if (!session?.userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const userId = await authenticateTeacher(request);
 
     const liveClasses = await prisma.liveClass.findMany({
       where: {
-        teacherId: session.userId,
-        roomName: { not: null }, // LiveKit classes only
+        teacherId: userId,
       },
       select: {
         id: true,

@@ -99,69 +99,180 @@ export function TrainerProvider({ children }) {
         studentsRes,
         navRes,
         annRes,
+        quizRes,
+        msgRes,
       ] = await Promise.allSettled([
         fetch("/api/teacher/dashboard").then((r) => r.json()),
         fetch("/api/teacher/courses").then((r) => r.json()),
         fetch("/api/teacher/assignments").then((r) => r.json()),
         fetch("/api/teacher/submissions").then((r) => r.json()),
-        fetch("/api/teacher/live-classes").then((r) => r.json()),
+        fetch("/api/teacher/live").then((r) => r.json()),
         fetch("/api/teacher/students").then((r) => r.json()),
         fetch("/api/teacher/nav-counts").then((r) => r.json()),
         fetch("/api/teacher/announcements").then((r) => r.json()),
+        fetch("/api/teacher/quizzes").then((r) => r.json()),
+        fetch("/api/teacher/messages").then((r) => r.json()),
       ]);
 
+      // 1. Dashboard & Profile
       if (dashRes.status === "fulfilled" && dashRes.value?.success && dashRes.value.data?.teacher) {
         saveTrainer(dashRes.value.data.teacher);
       }
 
+      // 2. Courses with normalized fields for Trainer UI
       if (coursesRes.status === "fulfilled" && coursesRes.value?.success && coursesRes.value.data?.courses) {
-        saveCourses(coursesRes.value.data.courses);
+        const rawCourses = coursesRes.value.data.courses;
+        const normalizedCourses = rawCourses.map((c) => ({
+          ...c,
+          id: c.id,
+          title: c.title,
+          category: c.category || "Technology & Analytics",
+          level: c.level || "Intermediate",
+          status: (c.status === "published" || c.isPublished || c.status === "active") ? "active" : "draft",
+          isPublished: Boolean(c.isPublished || c.status === "published" || c.status === "active"),
+          enrolledCount: c.studentsEnrolled ?? c.enrolledCount ?? 84,
+          totalLessons: c.totalVideos ?? c.totalLessons ?? 12,
+          totalModules: c.totalModules ?? (c.modules ? c.modules.length : 4),
+          durationHours: c.durationHours ?? 18,
+          completionRate: c.completionRate ?? 82,
+          thumbnail: c.thumbnail || "/images/satellite-meteorology-thumb.jpg",
+          description: c.description || "Course curriculum and practical laboratory masterclasses.",
+          modules: c.modules || []
+        }));
+        if (normalizedCourses.length > 0) {
+          saveCourses(normalizedCourses);
+        }
       }
 
+      // 3. Assignments
       if (asgRes.status === "fulfilled" && asgRes.value?.success && asgRes.value.data?.assignments) {
-        saveAssignments(asgRes.value.data.assignments);
+        const rawAsgs = asgRes.value.data.assignments;
+        if (Array.isArray(rawAsgs) && rawAsgs.length > 0) {
+          const normalizedAsgs = rawAsgs.map((a) => ({
+            ...a,
+            id: a.id,
+            title: a.title,
+            courseId: a.courseId || a.course?.id,
+            courseTitle: a.courseTitle || a.course?.title || "Advanced Course",
+            dueDate: a.dueDate || a.dueAt || "2026-03-31",
+            maxMarks: a.maxScore || a.maxMarks || 100,
+            weightage: a.weightage || "15% of Final Grade",
+            status: a.status?.toLowerCase() === "released" ? "active" : (a.status?.toLowerCase() || "active"),
+            totalSubmissions: a.attemptCount || 0,
+            gradedCount: 0,
+            pendingCount: 0,
+          }));
+          saveAssignments(normalizedAsgs);
+        }
       }
 
+      // 4. Submissions Desk
       if (subRes.status === "fulfilled" && subRes.value?.success && subRes.value.data?.submissions) {
-        saveSubmissions(subRes.value.data.submissions);
+        const rawSubs = subRes.value.data.submissions;
+        if (Array.isArray(rawSubs) && rawSubs.length > 0) {
+          const normalizedSubs = rawSubs.map((s) => ({
+            ...s,
+            id: s.id,
+            studentName: s.studentName || s.student?.name || "Enrolled Trainee",
+            studentEmail: s.studentEmail || s.student?.email || "",
+            studentAvatar: s.studentAvatar || s.student?.image || "/images/student-img-1.jpg",
+            division: s.division || "Advanced Technology Division",
+            assignmentId: s.assignmentId || s.assignment?.id,
+            assignmentTitle: s.assignmentTitle || s.assignment?.title || "Practical Lab",
+            courseId: s.courseId || s.assignment?.courseId,
+            courseTitle: s.courseTitle || s.assignment?.courseTitle || "Course Practical",
+            status: s.status?.toLowerCase() === "graded" ? "graded" : "pending",
+            score: s.score,
+            maxScore: s.maxScore || 100,
+            feedback: s.feedback || "",
+            submittedAt: s.submittedAt || new Date().toISOString(),
+            fileUrl: s.fileUrl || null,
+          }));
+          saveSubmissions(normalizedSubs);
+        }
       }
 
-      if (liveRes.status === "fulfilled" && liveRes.value?.success && liveRes.value.data?.liveClasses) {
-        saveLiveClasses(liveRes.value.data.liveClasses);
+      // 5. Live Classes
+      if (liveRes.status === "fulfilled" && liveRes.value?.success && (liveRes.value.data?.liveClasses || liveRes.value.liveClasses)) {
+        const rawLive = liveRes.value.data?.liveClasses || liveRes.value.liveClasses;
+        if (Array.isArray(rawLive) && rawLive.length > 0) {
+          const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+          const normalizedLive = rawLive.map((l) => {
+            const d = l.scheduledAt ? new Date(l.scheduledAt) : (l.createdAt ? new Date(l.createdAt) : new Date());
+            return {
+              ...l,
+              id: l.id,
+              title: l.title,
+              courseId: l.courseId,
+              courseName: l.course?.title || "Live Masterclass Session",
+              status: l.status?.toLowerCase() || "upcoming",
+              day: String(d.getDate()).padStart(2, "0"),
+              month: months[d.getMonth()] || "SEP",
+              time: l.scheduledAt ? new Date(l.scheduledAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "10:00 AM IST",
+              registeredCount: 84,
+              meetingUrl: l.roomName ? `/live-class/${l.id}` : `https://meet.sarthi.gov.in/live-${l.id.slice(-4)}`,
+            };
+          });
+          saveLiveClasses(normalizedLive);
+        }
       }
 
+      // 6. Trainees & Students
       if (studentsRes.status === "fulfilled" && studentsRes.value?.success && studentsRes.value.data?.students) {
         const rawStudents = studentsRes.value.data.students;
-        const normalized = rawStudents.map((s) => ({
-          ...s,
-          id: s.id,
-          name: s.name || s.student?.name || "Enrolled Student",
-          email: s.email || s.student?.email || "student@sarthi.gov.in",
-          avatar: s.avatar || s.student?.image || "/images/student-img-1.jpg",
-          division: s.division || s.course?.title || "Advanced Technology Division",
-          cohort: s.cohort || "Probationary Cohort 2026",
-          attendance: s.attendance ?? (s.progress > 0 ? s.progress : 94),
-          quizAverage: s.quizAverage ?? (s.progress > 0 ? s.progress : 90),
-          assignmentsCompleted: s.assignmentsCompleted ?? (s.progress === 100 ? 5 : 3),
-          totalAssignments: s.totalAssignments ?? 5,
-          performanceTier: s.performanceTier || (s.progress >= 80 ? "Exemplary" : s.status === "struggling" ? "Needs Attention" : "On Track"),
-        }));
-        saveTrainees(normalized);
+        if (Array.isArray(rawStudents) && rawStudents.length > 0) {
+          const normalized = rawStudents.map((s) => ({
+            ...s,
+            id: s.id,
+            name: s.name || s.student?.name || "Enrolled Student",
+            email: s.email || s.student?.email || "student@sarthi.gov.in",
+            avatar: s.avatar || s.student?.image || "/images/student-img-1.jpg",
+            division: s.division || s.course?.title || "Advanced Technology Division",
+            cohort: s.cohort || "Probationary Cohort 2026",
+            attendance: s.attendance ?? (s.progress > 0 ? s.progress : 94),
+            quizAverage: s.quizAverage ?? (s.progress > 0 ? s.progress : 90),
+            assignmentsCompleted: s.assignmentsCompleted ?? (s.progress === 100 ? 5 : 3),
+            totalAssignments: s.totalAssignments ?? 5,
+            performanceTier: s.performanceTier || (s.progress >= 80 ? "Exemplary" : s.status === "struggling" ? "Needs Attention" : "On Track"),
+          }));
+          saveTrainees(normalized);
+        }
       }
 
+      // 7. Navigation Counts
       if (navRes.status === "fulfilled" && navRes.value?.success && navRes.value.data) {
         setNavCounts(navRes.value.data);
       }
 
-      if (annRes.status === "fulfilled" && annRes.value?.success && Array.isArray(annRes.value.data)) {
-        saveBroadcasts(annRes.value.data);
+      // 8. Announcements & Broadcasts
+      if (annRes.status === "fulfilled" && annRes.value?.success) {
+        const annList = annRes.value.data?.announcements || (Array.isArray(annRes.value.data) ? annRes.value.data : []);
+        if (Array.isArray(annList) && annList.length > 0) {
+          saveBroadcasts(annList);
+        }
+      }
+
+      // 9. Quizzes
+      if (quizRes.status === "fulfilled" && quizRes.value?.success && quizRes.value.data?.quizzes) {
+        const rawQuizzes = quizRes.value.data.quizzes;
+        if (Array.isArray(rawQuizzes) && rawQuizzes.length > 0) {
+          saveQuizzes(rawQuizzes);
+        }
+      }
+
+      // 10. Messages & Conversations
+      if (msgRes.status === "fulfilled" && msgRes.value?.success && msgRes.value.data?.conversations) {
+        const rawConvs = msgRes.value.data.conversations;
+        if (Array.isArray(rawConvs) && rawConvs.length > 0) {
+          saveConversations(rawConvs);
+        }
       }
     } catch (err) {
       console.warn("Trainer API sync warning:", err);
     } finally {
       setIsSyncing(false);
     }
-  }, [saveTrainer, saveCourses, saveAssignments, saveSubmissions, saveLiveClasses, saveTrainees, saveBroadcasts]);
+  }, [saveTrainer, saveCourses, saveAssignments, saveSubmissions, saveLiveClasses, saveTrainees, saveBroadcasts, saveQuizzes, saveConversations]);
 
   // Load initial state: localStorage first, then sync with live backend
   useEffect(() => {
@@ -197,22 +308,57 @@ export function TrainerProvider({ children }) {
       }
 
       const savedAssignments = localStorage.getItem("sarthi_trainer_assignments");
-      if (savedAssignments) setAssignments(JSON.parse(savedAssignments));
+      if (savedAssignments) {
+        const parsed = JSON.parse(savedAssignments);
+        if (Array.isArray(parsed) && parsed.some((a) => a.id === "asg-1")) {
+          localStorage.removeItem("sarthi_trainer_assignments");
+        } else {
+          setAssignments(parsed);
+        }
+      }
 
       const savedSubmissions = localStorage.getItem("sarthi_trainer_submissions");
-      if (savedSubmissions) setSubmissions(JSON.parse(savedSubmissions));
+      if (savedSubmissions) {
+        const parsed = JSON.parse(savedSubmissions);
+        if (Array.isArray(parsed) && parsed.some((s) => s.id === "sub-1")) {
+          localStorage.removeItem("sarthi_trainer_submissions");
+        } else {
+          setSubmissions(parsed);
+        }
+      }
 
       const savedLive = localStorage.getItem("sarthi_trainer_live");
-      if (savedLive) setLiveClasses(JSON.parse(savedLive));
+      if (savedLive) {
+        const parsed = JSON.parse(savedLive);
+        if (Array.isArray(parsed) && parsed.some((l) => l.id === "live-1")) {
+          localStorage.removeItem("sarthi_trainer_live");
+        } else {
+          setLiveClasses(parsed);
+        }
+      }
 
       const savedQuizzes = localStorage.getItem("sarthi_trainer_quizzes");
-      if (savedQuizzes) setQuizzes(JSON.parse(savedQuizzes));
+      if (savedQuizzes) {
+        const parsed = JSON.parse(savedQuizzes);
+        if (Array.isArray(parsed) && parsed.some((q) => q.id === "quiz-1")) {
+          localStorage.removeItem("sarthi_trainer_quizzes");
+        } else {
+          setQuizzes(parsed);
+        }
+      }
 
       const savedCerts = localStorage.getItem("sarthi_trainer_certs");
       if (savedCerts) setCertificates(JSON.parse(savedCerts));
 
       const savedConvs = localStorage.getItem("sarthi_trainer_convs");
-      if (savedConvs) setConversations(JSON.parse(savedConvs));
+      if (savedConvs) {
+        const parsed = JSON.parse(savedConvs);
+        if (Array.isArray(parsed) && parsed.some((c) => c.id === "conv-t-1")) {
+          localStorage.removeItem("sarthi_trainer_convs");
+        } else {
+          setConversations(parsed);
+        }
+      }
 
       const savedBcasts = localStorage.getItem("sarthi_trainer_bcasts");
       if (savedBcasts) setBroadcasts(JSON.parse(savedBcasts));
@@ -400,24 +546,24 @@ export function TrainerProvider({ children }) {
 
   // Actions: Live Classes
   const scheduleLiveClass = async (data) => {
-    const d = new Date(data.date || "2026-03-15");
+    const d = new Date(data.date || new Date());
     const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
     const newLive = {
       id: `live-session-${Date.now()}`,
       title: data.title,
       courseId: data.courseId,
       courseName: courses.find((c) => c.id === data.courseId)?.title || "Specialized Meteorological Session",
-      batch: data.batch || "All IMD Probationers",
+      batch: data.batch || "All Trainee Batches",
       date: data.date,
       day: String(d.getDate()).padStart(2, "0"),
-      month: months[d.getMonth()] || "MAR",
+      month: months[d.getMonth()] || "SEP",
       time: data.time || "10:00 AM - 11:30 AM IST",
       status: "upcoming",
       registeredCount: 45,
       attendedCount: 0,
-      meetingUrl: `https://meet.imd.gov.in/live-${Date.now().toString().slice(-4)}`,
-      passcode: "IMD-TRAINER-2026",
-      agenda: data.agenda || ["Introduction and theoretical framing", "Interactive radar/satellite live walk-through", "Q&A and student assessments"],
+      meetingUrl: `https://meet.sarthi.gov.in/live-${Date.now().toString().slice(-4)}`,
+      passcode: "SARTHI-FACULTY-2026",
+      agenda: data.agenda || ["Introduction and theoretical framing", "Interactive analysis lab", "Q&A and assessments"],
       materials: ["masterclass_handout.pdf"],
     };
 
@@ -425,10 +571,15 @@ export function TrainerProvider({ children }) {
     saveLiveClasses(updated);
 
     try {
-      await fetch("/api/teacher/live-classes", {
+      await fetch("/api/teacher/live", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          title: data.title,
+          description: data.description || "Live Interactive Masterclass",
+          courseId: data.courseId,
+          scheduledAt: data.date ? new Date(data.date).toISOString() : new Date().toISOString(),
+        }),
       });
     } catch (err) {
       console.warn("Backend live-class sync warning:", err);
@@ -438,14 +589,14 @@ export function TrainerProvider({ children }) {
   };
 
   // Actions: Quizzes
-  const createQuiz = (data) => {
+  const createQuiz = async (data) => {
     const newQuiz = {
       id: `quiz-trainer-${Date.now()}`,
       title: data.title,
       courseId: data.courseId,
       courseTitle: courses.find((c) => c.id === data.courseId)?.title || "Meteorology Assessment",
       timeLimitMinutes: Number(data.timeLimitMinutes) || 20,
-      totalQuestions: data.questions?.length || 3,
+      totalQuestions: data.questions?.length || 4,
       totalAttempts: 0,
       averageScore: 0,
       passRate: 0,
@@ -463,6 +614,17 @@ export function TrainerProvider({ children }) {
     };
     const updated = [newQuiz, ...quizzes];
     saveQuizzes(updated);
+
+    try {
+      await fetch("/api/teacher/quizzes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    } catch (err) {
+      console.warn("Backend quiz sync warning:", err);
+    }
+
     return newQuiz;
   };
 
@@ -552,9 +714,19 @@ export function TrainerProvider({ children }) {
     return newBcast;
   };
 
-  const updateTrainerProfile = (data) => {
+  const updateTrainerProfile = async (data) => {
     const updated = { ...trainer, ...data };
     saveTrainer(updated);
+
+    try {
+      await fetch("/api/teacher/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    } catch (err) {
+      console.warn("Backend profile sync error:", err);
+    }
   };
 
   const value = {

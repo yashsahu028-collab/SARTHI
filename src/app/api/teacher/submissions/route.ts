@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth';
+import { authenticateTeacher } from '@/lib/auth/middleware';
 import { Prisma } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
@@ -8,30 +8,28 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status') || 'pending'; // pending, graded, all
+    const status = searchParams.get('status') || 'all'; // pending, graded, all
 
-    const user = await getCurrentUser();
+    const userId = await authenticateTeacher(request);
 
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    if (user.role !== 'TEACHER' && user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
-    }
+    const teacher = await prisma.teacher.findFirst({
+      where: { userId }
+    });
 
     // Build where clause
     const whereClause: Prisma.SubmissionWhereInput = {
       lesson: {
         course: {
-          instructorId: user.id,
+          OR: [
+            { instructorId: userId },
+            ...(teacher ? [{ teacherId: teacher.id }] : [])
+          ]
         },
       },
     };
 
     if (status !== 'all') {
       if (status === 'pending') {
-        // Find SUBMITTED or PENDING
         whereClause.status = { in: ['SUBMITTED', 'PENDING'] };
       } else if (status === 'graded') {
         whereClause.status = 'GRADED';
@@ -67,31 +65,29 @@ export async function GET(request: Request) {
       },
     });
 
-    // Transform
+    // Transform for Trainer UI
     const transformedSubmissions = submissions.map((sub) => ({
       id: sub.id,
-      student: {
-        id: sub.user.id,
-        name: sub.user.name,
-        email: sub.user.email,
-      },
-      assignment: {
-        id: sub.lesson.id,
-        title: sub.lesson.title,
-        maxScore: 100, // Defaulting as not in schema currently
-        courseId: sub.lesson.course.id,
-        courseTitle: sub.lesson.course.title,
-      },
-      status: sub.status.toLowerCase(), // PENDING -> pending
+      studentId: sub.user.id,
+      studentName: sub.user.name || 'Enrolled Trainee',
+      studentEmail: sub.user.email || '',
+      studentAvatar: sub.user.image || '/images/student-img-1.jpg',
+      division: 'Advanced Technology & Meteorology',
+      assignmentId: sub.lesson.id,
+      assignmentTitle: sub.lesson.title,
+      courseId: sub.lesson.course.id,
+      courseTitle: sub.lesson.course.title,
+      status: sub.status === 'GRADED' ? 'graded' : 'pending',
       score: sub.grade,
-      feedback: sub.feedback,
+      maxScore: 100,
+      feedback: sub.feedback || '',
       submittedAt: sub.createdAt,
       content: sub.content || '',
       fileUrl: sub.fileUrl,
     }));
 
-    return NextResponse.json({ submissions: transformedSubmissions });
-  } catch (error) {
+    return NextResponse.json({ success: true, data: { submissions: transformedSubmissions } });
+  } catch (error: any) {
     console.error('[TeacherSubmissions] Error:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to fetch submissions' },

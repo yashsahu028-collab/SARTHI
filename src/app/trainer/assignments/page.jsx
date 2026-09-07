@@ -11,13 +11,13 @@ export default function TrainerAssignmentsPage() {
   const { assignments, submissions, courses, setActiveModal } = useTrainer();
 
   const filteredSubmissions = useMemo(() => {
-    return submissions.filter((sub) => {
+    return (submissions || []).filter((sub) => {
       const matchStatus = statusFilter === "all" || sub.status === statusFilter;
       const matchCourse = courseFilter === "all" || sub.courseTitle?.toLowerCase().includes(courseFilter.toLowerCase()) || sub.assignmentId?.includes(courseFilter);
       const matchSearch =
-        sub.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        sub.assignmentTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        sub.division.toLowerCase().includes(searchQuery.toLowerCase());
+        (sub.studentName?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (sub.assignmentTitle?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (sub.division?.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchStatus && matchCourse && matchSearch;
     });
   }, [submissions, statusFilter, courseFilter, searchQuery]);

@@ -12,9 +12,9 @@ export default function TrainerCertificatesPage() {
   const approvedCerts = certificates.filter((c) => c.status === "approved");
 
   const filteredCerts = certificates.filter((c) =>
-    c.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.courseTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.certificateNumber.toLowerCase().includes(searchQuery.toLowerCase())
+    (c.studentName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (c.courseTitle || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (c.certificateNumber || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (

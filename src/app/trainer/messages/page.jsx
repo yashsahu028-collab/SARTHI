@@ -6,7 +6,7 @@ import { useTrainer } from "@/lib/services/TrainerContext";
 
 export default function TrainerMessagesPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeConvId, setActiveConvId] = useState("conv-t-1");
+  const [activeConvId, setActiveConvId] = useState("");
   const [replyText, setReplyText] = useState("");
   const [activeTab, setActiveTab] = useState("doubts"); // 'doubts' | 'broadcasts'
 
@@ -17,7 +17,7 @@ export default function TrainerMessagesPage() {
     setActiveModal,
   } = useTrainer();
 
-  const activeConv = conversations.find((c) => c.id === activeConvId) || conversations[0];
+  const activeConv = (activeConvId ? conversations.find((c) => c.id === activeConvId) : null) || conversations[0];
 
   const handleSend = (e) => {
     e.preventDefault();
@@ -134,7 +134,7 @@ export default function TrainerMessagesPage() {
                         gap: "10px",
                       }}
                     >
-                      <img src={conv.avatar || "/images/student-img-1.jpg"} alt={conv.studentName} style={{ width: "38px", height: "38px", borderRadius: "50%", objectFit: "cover" }} />
+                      <img src={conv.avatar || conv.studentAvatar || "/images/student-img-1.jpg"} alt={conv.studentName} style={{ width: "38px", height: "38px", borderRadius: "50%", objectFit: "cover" }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <span style={{ fontWeight: "700", fontSize: "13px", color: "var(--sarthi-text-heading, #0a2920)" }}>{conv.studentName}</span>
@@ -157,7 +157,7 @@ export default function TrainerMessagesPage() {
                   <div style={{ borderBottom: "1px solid var(--sarthi-border, #e2e8f0)", paddingBottom: "14px", marginBottom: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div>
                       <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "800", color: "var(--sarthi-text-heading, #0a2920)" }}>{activeConv.studentName}</h3>
-                      <div style={{ fontSize: "12px", color: "var(--sarthi-text-muted, #64748b)" }}>Topic: {activeConv.topic} &bull; {activeConv.courseTitle}</div>
+                      <div style={{ fontSize: "12px", color: "var(--sarthi-text-muted, #64748b)" }}>Topic: {activeConv.topic} &bull; {activeConv.courseTitle || "Advanced Analytics"}</div>
                     </div>
                     <span style={{ fontSize: "11px", fontWeight: "700", padding: "3px 8px", borderRadius: "999px", background: "#dcfce7", color: "#166534" }}>
                       Active Inquiry
@@ -182,7 +182,7 @@ export default function TrainerMessagesPage() {
                       >
                         <div>{msg.text}</div>
                         <div style={{ fontSize: "10.5px", marginTop: "4px", opacity: 0.75, textAlign: msg.sender === "trainer" ? "right" : "left" }}>
-                          {msg.time}
+                          {msg.timestamp || msg.time}
                         </div>
                       </div>
                     ))}

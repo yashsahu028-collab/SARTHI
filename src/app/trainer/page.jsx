@@ -83,6 +83,7 @@ export default function TrainerDashboardPage() {
     courses,
     submissions,
     liveClasses,
+    quizzes,
     certificates,
     setActiveModal,
   } = useTrainer();
@@ -93,11 +94,11 @@ export default function TrainerDashboardPage() {
 
   const upcomingLive = useMemo(() => {
     return (
-      (liveClasses || []).find((l) => l.status === "upcoming" || l.status === "live") ||
+      (liveClasses || []).find((l) => l.status === "upcoming" || l.status === "live" || l.status === "scheduled") ||
       (liveClasses || [])[0] || {
         id: "live-1",
-        title: "INSAT-3DR Multi-Spectral Radiance & Sounding",
-        courseName: "Satellite Meteorology & Remote Sensing",
+        title: "Power BI & DAX Architectural Masterclass",
+        courseName: "Power BI Mastery — From Data to Decisions",
         day: "07",
         month: "SEP",
         time: "10:00 AM",
@@ -113,25 +114,25 @@ export default function TrainerDashboardPage() {
   // Primary active batch course
   const activeCourse =
     (courses || []).find((c) => c.status === "active") ||
-    courses[0] || {
-      id: "satellite-meteorology",
-      title: "Satellite Meteorology & Remote Sensing",
-      category: "Remote Sensing",
+    (courses || [])[0] || {
+      id: "course_power_bi_mastery_2026",
+      title: "Power BI Mastery — From Data to Decisions",
+      category: "Business Analytics",
       enrolledCount: 84,
       totalLessons: 48,
       durationHours: 18,
       progress: 72,
-      nextLesson: "3. INSAT-3D & 3DR Radiance Analysis",
+      nextLesson: "Practical Lab 1: Star Schema & ETL Pipeline",
       thumbnail: "/images/satellite-meteorology-thumb.jpg",
     };
 
   // Batch Competencies Data
   const batchCompetencies = [
-    { id: 1, name: "Satellite Meteorology", pct: 92, iconType: "satellite" },
-    { id: 2, name: "Radar & Doppler Dynamics", pct: 84, iconType: "radar" },
-    { id: 3, name: "NWP Numerical Modeling", pct: 88, iconType: "nwp" },
-    { id: 4, name: "Synoptic Monsoon Dynamics", pct: 79, iconType: "monsoon" },
-    { id: 5, name: "Disaster Early Warning & Agromet", pct: 86, iconType: "disaster" },
+    { id: 1, name: "Power Query ETL & Star Schema", pct: 92, iconType: "satellite" },
+    { id: 2, name: "Advanced DAX & Time Intelligence", pct: 88, iconType: "radar" },
+    { id: 3, name: "Data Modeling & Cardinality Flows", pct: 86, iconType: "nwp" },
+    { id: 4, name: "Executive KPI Dashboard Visualization", pct: 94, iconType: "monsoon" },
+    { id: 5, name: "Financial Sensitivity & What-If Parameters", pct: 82, iconType: "disaster" },
   ];
 
   // Weekly instruction hours (Mini Histogram)
@@ -150,38 +151,48 @@ export default function TrainerDashboardPage() {
     if (!searchQuery.trim()) return courses || [];
     return (courses || []).filter(
       (c) =>
-        c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.category?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [courses, searchQuery]);
 
-  // Recent faculty activities
-  const recentFacultyActivities = [
-    {
-      id: "act-1",
-      type: "green",
-      title: "Graded: INSAT-3DR Radiance Lab (Mohit Raj)",
-      time: "20 mins ago",
-    },
-    {
-      id: "act-2",
-      type: "blue",
-      title: "Published: WRF Boundary Layer Quiz 4",
-      time: "3 hours ago",
-    },
-    {
-      id: "act-3",
-      type: "purple",
-      title: "Completed: Doppler Radar Live Class (72 attended)",
-      time: "1 day ago",
-    },
-    {
-      id: "act-4",
-      type: "gold",
-      title: "Endorsed Certificate: NWP Modeling Specialist",
-      time: "2 days ago",
-    },
-  ];
+  // Recent faculty activities dynamically derived from live submissions, quizzes, and live classes
+  const recentFacultyActivities = useMemo(() => {
+    const list = [];
+    const graded = (submissions || []).filter((s) => s.status === "graded");
+    if (graded.length > 0) {
+      list.push({
+        id: `act-graded-${graded[0].id}`,
+        type: "green",
+        title: `Graded: ${graded[0].assignmentTitle} (${graded[0].studentName})`,
+        time: "Recently graded",
+      });
+    }
+    if ((quizzes || []).length > 0) {
+      list.push({
+        id: `act-quiz-${quizzes[0].id}`,
+        type: "blue",
+        title: `Published: ${quizzes[0].title}`,
+        time: "Active assessment",
+      });
+    }
+    if ((liveClasses || []).length > 0) {
+      list.push({
+        id: `act-live-${liveClasses[0].id}`,
+        type: "purple",
+        title: `Scheduled: ${liveClasses[0].title}`,
+        time: `${liveClasses[0].day} ${liveClasses[0].month} · ${liveClasses[0].time}`,
+      });
+    }
+    if (list.length === 0) {
+      return [
+        { id: "act-1", type: "green", title: "Graded: Practical Lab 1 (Mohit Raj)", time: "10 mins ago" },
+        { id: "act-2", type: "blue", title: "Published: DAX & Data Modeling Assessment", time: "1 hour ago" },
+        { id: "act-3", type: "purple", title: "Completed: Live Masterclass (84 attended)", time: "Yesterday" },
+      ];
+    }
+    return list;
+  }, [submissions, quizzes, liveClasses]);
 
   return (
     <TrainerShell searchQuery={searchQuery} setSearchQuery={setSearchQuery}>

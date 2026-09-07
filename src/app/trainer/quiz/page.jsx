@@ -11,14 +11,15 @@ export default function TrainerQuizPage() {
   const { quizzes, courses, createQuiz } = useTrainer();
 
   const [newTitle, setNewTitle] = useState("");
-  const [newCourseId, setNewCourseId] = useState(courses[0]?.id || "satellite-meteorology");
+  const [newCourseId, setNewCourseId] = useState("");
   const [newTimeLimit, setNewTimeLimit] = useState(20);
 
-  const handleCreateQuiz = (e) => {
+  const handleCreateQuiz = async (e) => {
     e.preventDefault();
-    createQuiz({
+    const targetCourseId = newCourseId || courses[0]?.id;
+    await createQuiz({
       title: newTitle,
-      courseId: newCourseId,
+      courseId: targetCourseId,
       timeLimitMinutes: Number(newTimeLimit),
     });
     setShowCreateModal(false);

@@ -23,7 +23,12 @@ export async function GET(request: NextRequest) {
 
     const assignments = await prisma.assignment.findMany({
       where: {
-        course: { teacherId: teacher.id }
+        course: {
+          OR: [
+            { instructorId: userId },
+            ...(teacher ? [{ teacherId: teacher.id }] : [])
+          ]
+        }
       },
       include: {
         course: { select: { title: true } },
@@ -117,7 +122,13 @@ export async function POST(request: NextRequest) {
 
     // Verify course ownership
     const course = await prisma.course.findFirst({
-      where: { id: courseId, teacherId: teacher.id }
+      where: {
+        id: courseId,
+        OR: [
+          { instructorId: userId },
+          ...(teacher ? [{ teacherId: teacher.id }] : [])
+        ]
+      }
     });
 
     if (!course) {
